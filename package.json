@@ -1,0 +1,8 @@
+{
+  "name": "mercato-dashboard",
+  "version": "1.0.0",
+  "description": "Dashboard Mercato Centrale Bolzano",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0"
+  }
+}
