@@ -1681,6 +1681,129 @@
       background: var(--rosa-2);
       flex-shrink: 0;
     }
+
+    /* ── FOLLOWER SECTION ───────────────────────────────── */
+    .follower-section {
+      background: var(--bianco);
+      border-radius: 16px;
+      padding: clamp(20px, 4vw, 28px);
+      box-shadow: 0 2px 12px rgba(33,13,9,0.08);
+      border: 1px solid var(--rosa-2);
+      margin-bottom: clamp(24px, 5vw, 36px);
+    }
+    .follower-section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .follower-section-icon {
+      font-size: 1.5rem;
+    }
+    .follower-section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      font-weight: 700;
+      color: var(--scuro);
+    }
+    .follower-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(14px, 3vw, 20px);
+    }
+    @media (max-width: 580px) { .follower-grid { grid-template-columns: 1fr; } }
+    .follower-block {
+      background: var(--rosa-1);
+      border-radius: 14px;
+      padding: clamp(16px, 3vw, 24px);
+      text-align: center;
+    }
+    .follower-block-title {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--salmone);
+      margin-bottom: 16px;
+    }
+    .follower-platforms {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+    }
+    .follower-platform {
+      flex: 1;
+      text-align: center;
+      padding: 0 12px;
+    }
+    .follower-platform-icon {
+      font-size: 1.4rem;
+      margin-bottom: 6px;
+    }
+    .follower-platform-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--salmone);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .follower-platform-value {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.3rem, 3.5vw, 1.8rem);
+      font-weight: 700;
+      color: var(--scuro);
+      line-height: 1.1;
+    }
+    .follower-platform-value.loading {
+      color: var(--rosa-2);
+      font-size: clamp(0.8rem, 2vw, 0.9rem);
+    }
+    .follower-platform-value.from-ads {
+      color: var(--corallo);
+    }
+    .follower-divider {
+      width: 1px;
+      height: 50px;
+      background: var(--rosa-2);
+      flex-shrink: 0;
+    }
+    .follower-total-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--rosa-2);
+    }
+    .follower-total-label {
+      font-size: 0.72rem;
+      color: var(--salmone);
+      font-weight: 500;
+    }
+    .follower-total-value {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+      font-weight: 700;
+      color: var(--scuro);
+    }
+    .follower-total-value.from-ads {
+      color: var(--corallo);
+    }
+    .follower-ads-badge {
+      display: inline-block;
+      background: #e6f5ec;
+      color: #2d8a55;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 6px;
+    }
     /* ── LANGUAGE SWITCHER ───────────────────────────────── */
     .lang-switcher {
       display: flex;
@@ -1843,35 +1966,6 @@
       line-height: 1.6;
       margin: 0;
     }
-    .glossary-lang-tabs {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 24px;
-      padding: 16px 0;
-      border-bottom: 2px solid var(--rosa-2);
-    }
-    .glossary-lang-btn {
-      padding: 10px 20px;
-      border: 2px solid var(--rosa-2);
-      border-radius: 8px;
-      background: white;
-      color: var(--scuro);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 1rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    .glossary-lang-btn:hover {
-      border-color: var(--corallo);
-      color: var(--corallo);
-    }
-    .glossary-lang-btn.active {
-      background: var(--corallo);
-      border-color: var(--corallo);
-      color: white;
-      box-shadow: 0 4px 12px rgba(221, 147, 136, 0.3);
-    }
   </style>
 </head>
 <body>
@@ -2025,20 +2119,14 @@
     <button class="tab-btn" onclick="showTab('campaigns')" data-i18n="tab_campaigns">Campagne</button>
     <button class="tab-btn" onclick="showTab('adsets')" data-i18n="tab_adsets">Gruppi di annunci</button>
     <button class="tab-btn" onclick="showTab('charts')">📊 <span data-i18n="tab_charts">Grafici</span></button>
-    <button class="tab-btn" onclick="showTab('glossary')">📖 <span data-i18n="tab_glossary">Glossario</span></button>
+    <button class="tab-btn" onclick="showTab('glossary')">📚 <span data-i18n="tab_glossary">Glossario</span></button>
   </div>
 
   <div id="tab-summary"></div>
   <div id="tab-campaigns" style="display:none"></div>
   <div id="tab-adsets"    style="display:none"></div>
   <div id="tab-charts"    style="display:none"></div>
-  <div id="tab-glossary"  style="display:none">
-    <div class="glossary-lang-tabs">
-      <button class="glossary-lang-btn active" data-lang="it" onclick="switchGlossaryLang('it')">🇮🇹 <span data-i18n="glossary_lang_it">Italiano</span></button>
-      <button class="glossary-lang-btn" data-lang="de" onclick="switchGlossaryLang('de')">🇩🇪 <span data-i18n="glossary_lang_de">Deutsch</span></button>
-    </div>
-    <div id="glossary-content"></div>
-  </div>
+  <div id="tab-glossary"  style="display:none"></div>
 </div>
 
 <script>
@@ -2055,6 +2143,110 @@
   let _selectedCampaigns = new Set();
   const STORAGE_KEY  = 'mc_saved_dashboards';
   const RENAMES_KEY  = 'mc_renames';
+
+  // ── FOLLOWER DATA ────────────────────────────────────────────
+  let _followerData = null; // { fb: number|null, ig: number|null }
+  const FB_PAGE_ID = '764293213423549'; // Il Mercato Centrale Bolzano.Bozen
+
+  async function fetchFollowerCounts() {
+    if (isDemoMode()) {
+      _followerData = { fb: 408, ig: null };
+      return _followerData;
+    }
+    try {
+      // Direct call to the known Page ID with confirmed working fields
+      // GET /{PAGE_ID}?fields=followers_count,fan_count,instagram_business_account
+      let fbFollowers = null;
+      let igFollowers = null;
+
+      const pageRes = await metaGet(FB_PAGE_ID, {
+        fields: 'followers_count,fan_count,instagram_business_account'
+      });
+
+      fbFollowers = pageRes.followers_count || pageRes.fan_count || null;
+      console.log('[Dashboard] FB Page followers_count:', pageRes.followers_count, '| fan_count:', pageRes.fan_count);
+
+      // If Instagram Business Account is linked, fetch IG followers
+      if (pageRes.instagram_business_account && pageRes.instagram_business_account.id) {
+        try {
+          const igRes = await metaGet(pageRes.instagram_business_account.id, {
+            fields: 'followers_count,username'
+          });
+          igFollowers = igRes.followers_count || null;
+          console.log('[Dashboard] IG account:', igRes.username, '→ followers:', igFollowers);
+        } catch(e) {
+          console.log('[Dashboard] Could not fetch IG followers:', e.message);
+        }
+      } else {
+        console.log('[Dashboard] No instagram_business_account linked — IG followers not available');
+      }
+
+      _followerData = { fb: fbFollowers, ig: igFollowers };
+      return _followerData;
+
+    } catch(e) {
+      console.log('[Dashboard] fetchFollowerCounts error:', e.message);
+
+      // Fallback: try via promote_pages from ad account
+      try {
+        console.log('[Dashboard] Trying fallback via promote_pages...');
+        const promoteRes = await metaGet(`act_${AD_ACCOUNT_ID}/promote_pages`, {
+          fields: 'id,name'
+        });
+        const pages = promoteRes.data || [];
+        if (pages.length > 0) {
+          const pageId = pages[0].id;
+          const pageDetail = await metaGet(pageId, {
+            fields: 'followers_count,fan_count,instagram_business_account'
+          });
+          const fb = pageDetail.followers_count || pageDetail.fan_count || null;
+          let ig = null;
+          if (pageDetail.instagram_business_account && pageDetail.instagram_business_account.id) {
+            try {
+              const igRes = await metaGet(pageDetail.instagram_business_account.id, { fields: 'followers_count' });
+              ig = igRes.followers_count || null;
+            } catch(e2) {}
+          }
+          _followerData = { fb, ig };
+          console.log('[Dashboard] Fallback succeeded → FB:', fb, '| IG:', ig);
+          return _followerData;
+        }
+      } catch(e2) {
+        console.log('[Dashboard] Fallback also failed:', e2.message);
+      }
+
+      _followerData = { fb: null, ig: null };
+      return _followerData;
+    }
+  }
+
+  function updateFollowerUI() {
+    if (!_followerData) return;
+    const fbEl = document.getElementById('follower-fb-current');
+    const igEl = document.getElementById('follower-ig-current');
+    if (fbEl) {
+      fbEl.classList.remove('loading');
+      fbEl.textContent = _followerData.fb !== null ? _followerData.fb.toLocaleString('it-IT') : t('followers_error');
+    }
+    if (igEl) {
+      igEl.classList.remove('loading');
+      igEl.textContent = _followerData.ig !== null ? _followerData.ig.toLocaleString('it-IT') : t('followers_error');
+    }
+    // Update total row if it exists
+    const totalRow = document.querySelector('#follower-section .follower-block:first-child .follower-total-value');
+    if (totalRow && _followerData.fb !== null && _followerData.ig !== null) {
+      totalRow.textContent = ((_followerData.fb || 0) + (_followerData.ig || 0)).toLocaleString('it-IT');
+    }
+    // Create total row if it didn't exist yet (because data was loading)
+    const firstBlock = document.querySelector('#follower-section .follower-block:first-child');
+    if (firstBlock && !firstBlock.querySelector('.follower-total-row') && (_followerData.fb !== null || _followerData.ig !== null)) {
+      const totalDiv = document.createElement('div');
+      totalDiv.className = 'follower-total-row';
+      totalDiv.innerHTML = `<span class="follower-total-label">${t('followers_total_current')}:</span>
+        <span class="follower-total-value">${((_followerData.fb || 0) + (_followerData.ig || 0)).toLocaleString('it-IT')}</span>`;
+      firstBlock.appendChild(totalDiv);
+    }
+  }
 
   // ── TRANSLATIONS ─────────────────────────────────────────────
   const TRANSLATIONS = {
@@ -2151,6 +2343,17 @@
       kpi_video: 'Views video 3s',
       kpi_fb_followers: 'Nuovi follower FB',
       kpi_ig_followers: 'Nuovi follower IG',
+      followers_section_title: 'Follower',
+      followers_current: 'Follower attuali',
+      followers_from_ads: 'Nuovi follower da Ads',
+      followers_fb_current: 'Facebook',
+      followers_ig_current: 'Instagram',
+      followers_fb_ads: 'Facebook (page like)',
+      followers_ig_ads: 'Instagram (follow)',
+      followers_total_current: 'Totale follower',
+      followers_total_ads: 'Acquisiti dalle campagne',
+      followers_loading: 'Caricamento…',
+      followers_error: 'Non disponibile',
       eng_best_adsets: '— Migliori campagne del periodo selezionato',
       eng_best_ads: '— Migliori annunci',
       tra_best_adsets: '— Migliori campagne del periodo selezionato',
@@ -2193,6 +2396,8 @@
       c7_desc: 'Quale annuncio ha convinto di più le persone a cliccare. Confronto diretto tra creativi.',
       c8_title: 'Efficienza: CPM vs CPC',
       c8_desc: 'Costo per 1000 impression (CPM) vs costo per click (CPC). Aiuta a capire dove si ottiene più valore per euro speso.',
+      c9_title: 'Costo/Eng. Pagina per formato',
+      c9_desc: 'Confronto del costo medio per engagement di pagina tra i diversi formati pubblicitari (Feed, Reel, Stories, ecc.). Più basso è il costo, più il formato è efficiente nel generare interazioni.',
       interactions_tooltip: 'interazioni',
       // Glossario
       tab_glossary: 'Glossario',
@@ -2222,8 +2427,6 @@
       metric_spend_desc: 'L\'importo totale in euro che hai investito nella campagna. È il budget effettivamente speso per mostrare gli annunci al tuo pubblico.',
       metric_video_3s: 'Views video 3s',
       metric_video_3s_desc: 'Numero di persone che hanno guardato il tuo video per almeno 3 secondi. È una metrica importante per capire se il video cattura l\'attenzione nei primissimi secondi.',
-      glossary_lang_it: 'Italiano',
-      glossary_lang_de: 'Deutsch',
       // Rename
       rename_title: 'Rinomina',
       logout_btn: 'Esci',
@@ -2317,6 +2520,17 @@
       kpi_video: 'Video-Views 3s',
       kpi_fb_followers: 'Neue Follower FB',
       kpi_ig_followers: 'Neue Follower IG',
+      followers_section_title: 'Follower',
+      followers_current: 'Aktuelle Follower',
+      followers_from_ads: 'Neue Follower aus Ads',
+      followers_fb_current: 'Facebook',
+      followers_ig_current: 'Instagram',
+      followers_fb_ads: 'Facebook (Seiten-Like)',
+      followers_ig_ads: 'Instagram (Follow)',
+      followers_total_current: 'Follower gesamt',
+      followers_total_ads: 'Aus Kampagnen gewonnen',
+      followers_loading: 'Laden…',
+      followers_error: 'Nicht verfügbar',
       eng_best_adsets: '— Beste Kampagnen des Zeitraums',
       eng_best_ads: '— Beste Anzeigen',
       tra_best_adsets: '— Beste Kampagnen des Zeitraums',
@@ -2358,6 +2572,8 @@
       c7_desc: 'Welche Anzeige hat mehr Personen zum Klicken bewegt. Direkter Vergleich zwischen Creatives.',
       c8_title: 'Effizienz: CPM vs. CPC',
       c8_desc: 'Kosten pro 1000 Impressionen (CPM) vs. Kosten pro Klick (CPC). Zeigt, wo man den besten Wert pro ausgegebenem Euro erzielt.',
+      c9_title: 'Kosten/Seiteneng. nach Format',
+      c9_desc: 'Vergleich der durchschnittlichen Kosten pro Seitenengagement zwischen den verschiedenen Werbeformaten (Feed, Reel, Stories, usw.). Je niedriger die Kosten, desto effizienter ist das Format bei der Generierung von Interaktionen.',
       interactions_tooltip: 'Interaktionen',
       // Glossario
       tab_glossary: 'Glossar',
@@ -2387,8 +2603,6 @@
       metric_spend_desc: 'Der Gesamtbetrag in Euro, den du in die Kampagne investiert hast. Es ist das tatsächlich ausgegebene Budget zum Anzeigen deiner Anzeigen.',
       metric_video_3s: 'Video-Views 3s',
       metric_video_3s_desc: 'Die Anzahl der Menschen, die dein Video mindestens 3 Sekunden lang angesehen haben. Es ist eine wichtige Kennzahl, um zu verstehen, ob das Video in den ersten Sekunden Aufmerksamkeit erregt.',
-      glossary_lang_it: 'Italiano',
-      glossary_lang_de: 'Deutsch',
       rename_title: 'Umbenennen',
       logout_btn: 'Abmelden',
       rename_placeholder: 'Neuer Name…',
@@ -2440,10 +2654,8 @@
     { id: 'video_3s', label_key: 'metric_video_3s', desc_key: 'metric_video_3s_desc' }
   ];
 
-  let _glossaryLang = 'it'; // Current glossary language
-
   function renderGlossary() {
-    const glossaryContent = document.getElementById('glossary-content');
+    const glossaryContainer = document.getElementById('tab-glossary');
     
     let html = `
       <div class="glossary-container">
@@ -2475,24 +2687,7 @@
       </div>
     `;
     
-    glossaryContent.innerHTML = html;
-  }
-
-  function switchGlossaryLang(lang) {
-    _glossaryLang = lang;
-    const savedLang = _lang;
-    _lang = lang;
-    
-    // Update button states
-    document.querySelectorAll('.glossary-lang-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
-    });
-    
-    // Re-render glossary
-    renderGlossary();
-    
-    // Restore original language
-    _lang = savedLang;
+    glossaryContainer.innerHTML = html;
   }
 
   // ── TOOLTIP HELPER ───────────────────────────────────────────
@@ -2651,13 +2846,27 @@
   }
   function extractFollowers(actions) {
     if (!actions) return { ig: 0, fb: 0 };
-    // Instagram follows: sum ALL action_types containing 'follow'
-    // (API returns 'follow', 'onsite_conversion.follow', 'ig_profile_follow', etc.)
-    // Facebook likes: exact match on 'like' (page likes)
-    const ig = actions
-      .filter(x => x.action_type.includes('follow'))
-      .reduce((s, x) => s + parseFloat(x.value || 0), 0);
+
+    // Facebook page likes: action_type === 'like'
+    // This is the "Page Like" action, NOT post reactions (which are 'post_reaction')
     const fb = parseFloat((actions.find(x => x.action_type === 'like') || {}).value || 0);
+
+    // Instagram follows: Meta uses several possible action_types:
+    // - 'follow' (generic)
+    // - 'onsite_conversion.ig_profile_follow' (specific IG follow)
+    // - 'ig_profile_follow' (sometimes without prefix)
+    // We sum all follow-related types BUT exclude 'like' to avoid double counting
+    const igFollowTypes = ['follow', 'onsite_conversion.ig_profile_follow', 'ig_profile_follow', 'onsite_conversion.follow'];
+    const ig = actions
+      .filter(x => igFollowTypes.includes(x.action_type))
+      .reduce((s, x) => s + parseFloat(x.value || 0), 0);
+
+    // Debug: log all action types once (helps troubleshoot which types Meta returns)
+    if (window._debugFollowerActions !== true && actions.length > 0) {
+      window._debugFollowerActions = true;
+      console.log('[Dashboard] All action_types returned by Meta:', actions.map(x => x.action_type + '=' + x.value));
+    }
+
     return { ig, fb };
   }
   function extractCost(costArr, type) {
@@ -2730,13 +2939,14 @@
   }
 
   function getMockData() {
-    const makeCamp = (name, spend, reach, imp, clicks, cpc, ctr, cpm, eng) => ({
+    const makeCamp = (name, spend, reach, imp, clicks, cpc, ctr, cpm, eng, fbFol, igFol) => ({
       campaign_name: name, spend: String(spend), reach: String(reach),
       impressions: String(imp), link_clicks: String(clicks),
       cpc: String(cpc), ctr: String(ctr), cpm: String(cpm),
       page_engagement: String(eng), post_engagement: String(Math.round(eng*0.9)),
       video_3s: String(Math.round(imp*0.08)), cost_per_page_eng: String((spend/eng).toFixed(3)),
       cost_per_post_eng: String((spend/(eng*0.9)).toFixed(3)),
+      fb_followers: fbFol || 0, ig_followers: igFol || 0,
       status: 'ACTIVE', start_time: '2026-02-18T00:00:00+0000', stop_time: '2026-03-11T00:00:00+0000'
     });
     const makeAdset = (aname, cname, spend, reach, imp, clicks, cpc, ctr, cpm, eng, start, end, status='ACTIVE') => ({
@@ -2752,8 +2962,8 @@
     const TC = 'Traffic, Job Offers (2026 - zukunvt)';
     return {
       campaigns: [
-        makeCamp(EC, 386.05, 89432, 312540, 4821, 0.080, 1.542, 1.235, 98430),
-        makeCamp(TC, 156.30, 43210, 98760, 3240, 0.048, 3.280, 1.583, 12340),
+        makeCamp(EC, 386.05, 89432, 312540, 4821, 0.080, 1.542, 1.235, 98430, 12, 38),
+        makeCamp(TC, 156.30, 43210, 98760, 3240, 0.048, 3.280, 1.583, 12340, 5, 14),
       ],
       adsets: [
         makeAdset('(Live Music) Febbraio/Marzo_Bolzano/Merano/Trento_IT/DE_FB/IG_FEED', EC, 50.93, 15736, 26692, 278, 0.183, 1.042, 1.908, 362, '2026-02-18T00:00:00+0000', '2026-03-06T00:00:00+0000'),
@@ -2769,7 +2979,15 @@
         makeAdset('(Job Offers) Febbraio/Marzo_Bolzano_DE_FB_FEED', TC, 42.30, 10800, 27600, 980, 0.043, 3.551, 1.533, 3200, '2026-02-01T00:00:00+0000', '2026-03-31T00:00:00+0000'),
         makeAdset('(Brunch Weekend) Marzo_Bolzano/Merano_IT/DE_FB/IG', TC, 34.20, 11210, 17560, 340, 0.101, 1.936, 1.948, 2700, '2026-03-01T00:00:00+0000', '2026-03-31T00:00:00+0000'),
       ],
-      ads: []
+      ads: [],
+      formatData: [
+        { campaign_name: EC, ad_format_asset: 'Feed', spend: 218.39, page_engagement: 46289, cost_per_page_eng: '0.005' },
+        { campaign_name: EC, ad_format_asset: 'Reel/Short-form video', spend: 240.50, page_engagement: 50136, cost_per_page_eng: '0.005' },
+        { campaign_name: EC, ad_format_asset: 'Stories', spend: 0, page_engagement: 0, cost_per_page_eng: null },
+        { campaign_name: TC, ad_format_asset: 'Feed', spend: 107.70, page_engagement: 8040, cost_per_page_eng: '0.013' },
+        { campaign_name: TC, ad_format_asset: 'Stories', spend: 48.60, page_engagement: 3800, cost_per_page_eng: '0.013' },
+        { campaign_name: TC, ad_format_asset: 'Reel/Short-form video', spend: 0, page_engagement: 500, cost_per_page_eng: null },
+      ]
     };
   }
   // ─────────────────────────────────────────────────────────
@@ -2791,6 +3009,7 @@
       await new Promise(r => setTimeout(r, 600));
       _rawData = getMockData();
       _currentPeriod = { from, to };
+      await fetchFollowerCounts();
       showCampaignSelector({ from, to });
       return;
     }
@@ -2820,6 +3039,15 @@
       const adsetMeta     = await fetchAllPages(`act_${AD_ACCOUNT_ID}/adsets`,   { fields: 'name,status,start_time,end_time', limit: 200 });
       await delay(150);
       const adMeta        = await fetchAllPages(`act_${AD_ACCOUNT_ID}/ads`,      { fields: 'name,status,created_time,updated_time', limit: 200 });
+      await delay(150);
+
+      // Fetch insights broken down by ad_format_asset to get media type data
+      const formatBreakdown = await fetchAllPages(`act_${AD_ACCOUNT_ID}/insights`, {
+        ...insightsParams,
+        level: 'campaign',
+        fields: 'campaign_name,spend,actions,cost_per_action_type',
+        breakdowns: 'ad_format_asset'
+      });
 
       const budgetMap = {};
       budgetData.forEach(c => {
@@ -2877,6 +3105,17 @@
         return { ...processRow(row), ...b };
       });
 
+      // ── DEBUG: Log ALL action_types from raw campaign insights ──
+      // Check console (F12) to see exact action_type names Meta returns
+      console.log('%c[Dashboard] ══════ ALL ACTION TYPES FROM META ══════', 'color:#bb2317;font-weight:bold;font-size:14px');
+      filterExclude(campInsights).forEach(row => {
+        if (row.actions && row.actions.length) {
+          console.log('%c Campaign: ' + row.campaign_name, 'color:#ca5c4a;font-weight:bold');
+          console.table(row.actions.map(a => ({ action_type: a.action_type, value: a.value })));
+        }
+      });
+      console.log('%c[Dashboard] ══════════════════════════════════════', 'color:#bb2317;font-weight:bold;font-size:14px');
+
       const adsets = filterExclude(adsetInsights).map(row => {
         const m = adsetMetaMap[row.adset_name] || {};
         return { ...processRow(row), ...m };
@@ -2888,8 +3127,24 @@
       });
 
       // Store ALL raw data — filtering will happen after user selection
-      _rawData = { campaigns, adsets, ads };
+      // Process format breakdown data
+      const formatData = filterExclude(formatBreakdown).map(row => ({
+        campaign_name: row.campaign_name,
+        ad_format_asset: row.ad_format_asset || 'unknown',
+        spend: parseFloat(row.spend || 0),
+        page_engagement: extractAction(row.actions, 'page_engagement'),
+        cost_per_page_eng: extractCost(row.cost_per_action_type, 'page_engagement')
+      }));
+
+      _rawData = { campaigns, adsets, ads, formatData };
       _currentPeriod = { from, to };
+
+      // Fetch real follower counts (FB + IG) — updates UI when ready
+      fetchFollowerCounts().then(() => {
+        // If summary is already rendered, update the follower section
+        updateFollowerUI();
+      });
+
       showCampaignSelector({ from, to });
 
     } catch (err) {
@@ -3005,7 +3260,8 @@
     const filtered = {
       campaigns: _rawData.campaigns.filter(c => sel.has(c.campaign_name)),
       adsets:    _rawData.adsets.filter(c => sel.has(c.campaign_name)),
-      ads:       (_rawData.ads || []).filter(c => sel.has(c.campaign_name))
+      ads:       (_rawData.ads || []).filter(c => sel.has(c.campaign_name)),
+      formatData: (_rawData.formatData || []).filter(c => sel.has(c.campaign_name))
     };
 
     renderResults(_currentPeriod, filtered);
@@ -3227,6 +3483,10 @@
     const totalEng   = sumI(campaigns, 'page_engagement');
     const totalVideo   = sumI(campaigns, 'video_3s');
 
+    // Follower from ads (already extracted per campaign in processRow)
+    const totalFbFollowersAds = sumI(campaigns, 'fb_followers');
+    const totalIgFollowersAds = sumI(campaigns, 'ig_followers');
+
 
 
     // Group adsets by extracted label, summing all numeric metrics
@@ -3333,6 +3593,33 @@
           <div class="kpi-value">${totalImp > 0 ? (totalClick / totalImp * 100).toFixed(2).replace('.', ',') + '%' : '—'}</div>
           <div class="kpi-sub">CPM: € ${totalImp > 0 ? (totalSpend / totalImp * 1000).toFixed(2).replace('.', ',') : '—'}</div>
         </div>
+      </div>
+
+      <!-- FOLLOWER SECTION — only followers gained from ads in selected period -->
+      <div class="follower-section" id="follower-section">
+        <div class="follower-section-header">
+          <span class="follower-section-icon">👤</span>
+          <span class="follower-section-title">${t('followers_from_ads')}</span>
+          <span class="follower-ads-badge">📅 ${fmtDate(period.from)} → ${fmtDate(period.to)}</span>
+        </div>
+        <div class="follower-platforms" style="justify-content:center;padding:8px 0;">
+          <div class="follower-platform">
+            <div class="follower-platform-icon">📘</div>
+            <div class="follower-platform-label">${t('followers_fb_ads')}</div>
+            <div class="follower-platform-value from-ads">${totalFbFollowersAds > 0 ? '+' + totalFbFollowersAds.toLocaleString('it-IT') : '0'}</div>
+          </div>
+          <div class="follower-divider"></div>
+          <div class="follower-platform">
+            <div class="follower-platform-icon">📸</div>
+            <div class="follower-platform-label">${t('followers_ig_ads')}</div>
+            <div class="follower-platform-value from-ads">${totalIgFollowersAds > 0 ? '+' + totalIgFollowersAds.toLocaleString('it-IT') : '0'}</div>
+          </div>
+        </div>
+        ${(totalFbFollowersAds + totalIgFollowersAds) > 0 ? `
+        <div class="follower-total-row">
+          <span class="follower-total-label">${t('followers_total_ads')}:</span>
+          <span class="follower-total-value from-ads">+${(totalFbFollowersAds + totalIgFollowersAds).toLocaleString('it-IT')}</span>
+        </div>` : ''}
       </div>
 
       <div class="summary-sections">
@@ -3465,6 +3752,19 @@
           <h3>${t('c4_title')}</h3>
           <p class="chart-desc">${t('c4_desc')}</p>
           <canvas id="c4" style="max-height:220px"></canvas>
+        </div>
+      </div>
+
+      <div class="charts-section-title" style="margin-top:28px">
+        <span class="cs-dot e"></span>
+        ${_lang==='de' ? 'Effizienz nach Format' : 'Efficienza per formato'}
+      </div>
+      <div class="chart-grid">
+        <div class="chart-card" style="grid-column: 1 / -1;">
+          ${zoomBtn('c9')}
+          <h3>${t('c9_title')}</h3>
+          <p class="chart-desc">${t('c9_desc')}</p>
+          <canvas id="c9" style="max-height:280px"></canvas>
         </div>
       </div>
     `;
@@ -3666,6 +3966,97 @@
     // c4 — sorted by page_engagement (desc)
     const c4 = sortedFor(asItems, aLabels, asFull, a => a.page_engagement);
     mkPolar('c4', c4.labels, c4.values, PAL5, c4.fullNames, c4.dates);
+
+    // ── c9: Cost per Page Engagement by Media Format (from Meta API breakdown) ──
+    const rawFormatData = data.formatData || [];
+
+    // Group by ad_format_asset, summing spend and page_engagement
+    const formatMap = {};
+    rawFormatData.forEach(row => {
+      const fmt = row.ad_format_asset || (_lang === 'de' ? 'Unbekannt' : 'Sconosciuto');
+      if (!formatMap[fmt]) {
+        formatMap[fmt] = { spend: 0, page_engagement: 0, count: 0 };
+      }
+      formatMap[fmt].spend += parseFloat(row.spend || 0);
+      formatMap[fmt].page_engagement += parseInt(row.page_engagement || 0);
+      formatMap[fmt].count++;
+    });
+
+    // Compute cost per page engagement for each format, filter out zero-engagement
+    const formatChartData = Object.entries(formatMap)
+      .filter(([_, v]) => v.page_engagement > 0 && v.spend > 0)
+      .map(([fmt, v]) => ({
+        format: fmt,
+        cost_per_eng: v.spend / v.page_engagement,
+        spend: v.spend,
+        page_engagement: v.page_engagement,
+        count: v.count
+      }))
+      .sort((a, b) => a.cost_per_eng - b.cost_per_eng); // lowest cost = most efficient first
+
+    if (formatChartData.length > 0) {
+      const formatLabels = formatChartData.map(d => d.format);
+      const formatValues = formatChartData.map(d => parseFloat(d.cost_per_eng.toFixed(4)));
+
+      const c9Cfg = {
+        type: 'bar',
+        data: {
+          labels: formatLabels,
+          datasets: [{
+            data: formatValues,
+            backgroundColor: formatChartData.map((d, i) => {
+              // Gradient from green (efficient) to red (expensive)
+              const ratio = formatChartData.length > 1 ? i / (formatChartData.length - 1) : 0;
+              if (ratio <= 0.33) return '#2d8a55cc';
+              if (ratio <= 0.66) return '#ca5c4acc';
+              return '#bb2317cc';
+            }),
+            borderRadius: 6,
+            barThickness: 32
+          }]
+        },
+        options: {
+          ...commonOpts,
+          indexAxis: 'y',
+          scales: {
+            x: {
+              ticks: { font: { size: 11 }, callback: v => '€ ' + v.toFixed(3) },
+              grid: { color: '#f7e3e2' },
+              border: { display: false },
+              title: { display: true, text: _lang === 'de' ? 'Kosten pro Seitenengagement (€)' : 'Costo per Eng. Pagina (€)', font: { size: 11 }, color: '#dd9388' }
+            },
+            y: {
+              ticks: { font: { size: 13, weight: '600' }, color: '#210d09' },
+              grid: { display: false },
+              border: { display: false }
+            }
+          },
+          plugins: {
+            ...commonOpts.plugins,
+            tooltip: {
+              callbacks: {
+                title: ctx => {
+                  const i = ctx[0].dataIndex;
+                  const d = formatChartData[i];
+                  return d.format;
+                },
+                label: ctx => {
+                  const i = ctx.dataIndex;
+                  const d = formatChartData[i];
+                  return [
+                    ' ' + (_lang === 'de' ? 'Kosten/Eng.' : 'Costo/Eng.') + ': € ' + d.cost_per_eng.toFixed(4).replace('.', ','),
+                    ' ' + (_lang === 'de' ? 'Ausgaben' : 'Spesa') + ': € ' + d.spend.toFixed(2).replace('.', ','),
+                    ' ' + (_lang === 'de' ? 'Engagement' : 'Engagement') + ': ' + d.page_engagement.toLocaleString('it-IT')
+                  ];
+                }
+              }
+            }
+          }
+        }
+      };
+      window._chartConfigs['c9'] = c9Cfg;
+      new Chart(document.getElementById('c9'), c9Cfg);
+    }
   }
 
   // ── CHART MODAL ──────────────────────────────────────────────
