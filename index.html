@@ -3144,7 +3144,11 @@
       await delay(150);
       const adsetMeta     = await fetchAllPages(`act_${AD_ACCOUNT_ID}/adsets`,   { fields: 'name,status,start_time,end_time', limit: 200 });
       await delay(150);
-      const adMeta        = await fetchAllPages(`act_${AD_ACCOUNT_ID}/ads`,      { fields: 'name,status,created_time,updated_time,adset_id,creative{thumbnail_url,image_url}', limit: 200 });
+      const adMeta        = await fetchAllPages(`act_${AD_ACCOUNT_ID}/ads`,      { fields: 'name,status,created_time,updated_time,adset_id,creative{thumbnail_url,image_url,image_hash,object_story_spec}', limit: 200 });
+      await delay(150);
+
+      // Fetch full-resolution ad images by hash → url
+      const adImagesRaw   = await fetchAllPages(`act_${AD_ACCOUNT_ID}/adimages`, { fields: 'hash,url,permalink_url,width,height', limit: 200 });
       await delay(150);
 
       // Fetch insights broken down by ad_format_asset to get media type data
@@ -3177,27 +3181,46 @@
       });
 
       // Map ad name → metadata (including creative thumbnail)
+      // Build image hash → full-res URL map from adimages endpoint
+      const imageHashMap = {};
+      (adImagesRaw || []).forEach(img => {
+        if (img.hash) {
+          // permalink_url is the permanent full-res URL; url is CDN (also full-res but may expire)
+          imageHashMap[img.hash] = img.permalink_url || img.url || null;
+        }
+      });
+
       const adMetaMap = {};
       adMeta.forEach(a => {
+        const c = a.creative || {};
+        // Resolve full-res image: hash→adimages (best), then object_story_spec image, then image_url, then thumbnail
+        const hashUrl = c.image_hash ? (imageHashMap[c.image_hash] || null) : null;
+        // Try to extract image from object_story_spec.link_data.picture or .image_url
+        const storyImg = (c.object_story_spec && c.object_story_spec.link_data && c.object_story_spec.link_data.picture)
+          || (c.object_story_spec && c.object_story_spec.link_data && c.object_story_spec.link_data.image_url)
+          || (c.object_story_spec && c.object_story_spec.photo_data && c.object_story_spec.photo_data.url)
+          || null;
         adMetaMap[a.name] = {
           status:       a.status       || null,
           created_time: a.created_time || null,
-          thumbnail_url: (a.creative && a.creative.thumbnail_url) || null,
-          image_url:     (a.creative && a.creative.image_url)     || null
+          full_image_url: hashUrl || storyImg || c.image_url || c.thumbnail_url || null
         };
       });
 
-      // Build adset_name → image map from ad-level creative data
-      // Prefer image_url (full resolution) over thumbnail_url (tiny/pixelated)
+      // Build adset_name → full-res image map from ad-level creative data
       const adsetThumbnailMap = {};
       adInsights.forEach(row => {
         const adsetName = row.adset_name;
         if (!adsetName) return;
         const meta = adMetaMap[row.ad_name];
-        if (meta && (meta.image_url || meta.thumbnail_url) && !adsetThumbnailMap[adsetName]) {
-          adsetThumbnailMap[adsetName] = meta.image_url || meta.thumbnail_url;
+        if (meta && meta.full_image_url && !adsetThumbnailMap[adsetName]) {
+          adsetThumbnailMap[adsetName] = meta.full_image_url;
         }
       });
+      console.log('%c[Dashboard] Ad images resolved:', 'color:#2e7d32;font-weight:bold',
+        '\n  adimages hashes:', Object.keys(imageHashMap).length,
+        '\n  adset→image mappings:', Object.keys(adsetThumbnailMap).length,
+        '\n  sample URL:', Object.values(adsetThumbnailMap)[0] || '(none)');
 
       const filterExclude = arr => arr.filter(r => !(r.campaign_name || '').toUpperCase().includes(EXCLUDE_KW));
 
