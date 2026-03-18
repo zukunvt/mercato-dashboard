@@ -886,6 +886,66 @@
       margin-left: 2px;
     }
 
+    /* ── Ad creative thumbnail inside adset cards ── */
+    .adset-thumb-wrap {
+      margin: 8px 0 12px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--rosa-1);
+      border: 1px solid rgba(33,13,9,0.06);
+      position: relative;
+    }
+    .adset-thumb-wrap::after {
+      content: '🖼';
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      font-size: 0.65rem;
+      background: rgba(255,255,255,0.85);
+      border-radius: 6px;
+      padding: 2px 6px;
+      line-height: 1;
+      pointer-events: none;
+    }
+    .adset-thumb {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 200px;
+      object-fit: cover;
+      cursor: pointer;
+      transition: transform 0.25s ease;
+    }
+    .adset-thumb:hover {
+      transform: scale(1.02);
+    }
+
+    /* Fullscreen lightbox for ad images */
+    .thumb-lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(33,13,9,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+      animation: lbFadeIn 0.2s ease;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .thumb-lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: 10px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.4);
+      object-fit: contain;
+    }
+    @keyframes lbFadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
     .metrics-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -2824,6 +2884,18 @@
     document.getElementById('home-error').style.display = 'none';
   }
 
+  // ── AD IMAGE LIGHTBOX ─────────────────────────────────────────
+  function openThumbLightbox(imgSrc, altText) {
+    const lb = document.createElement('div');
+    lb.className = 'thumb-lightbox';
+    lb.onclick = () => lb.remove();
+    lb.innerHTML = `<img src="${imgSrc}" alt="${(altText||'').replace(/"/g,'&quot;')}" />`;
+    document.body.appendChild(lb);
+    // Close on Escape
+    const closeOnEsc = (e) => { if (e.key === 'Escape') { lb.remove(); document.removeEventListener('keydown', closeOnEsc); } };
+    document.addEventListener('keydown', closeOnEsc);
+  }
+
   // ── FORMAT HELPERS ───────────────────────────────────────────
   function fmt(val, d = 2) {
     if (val === null || val === undefined) return '—';
@@ -2956,7 +3028,8 @@
       page_engagement: String(eng), post_engagement: String(Math.round(eng*0.9)),
       video_3s: String(Math.round(imp*0.08)), cost_per_page_eng: String((spend/eng).toFixed(3)),
       cost_per_post_eng: String((spend/(eng*0.9)).toFixed(3)),
-      status, start_time: start, end_time: end
+      status, start_time: start, end_time: end,
+      thumbnail_url: null
     });
     const EC = 'Engagement (2026 - zukunvt)';
     const TC = 'Traffic, Job Offers (2026 - zukunvt)';
@@ -3038,7 +3111,7 @@
       await delay(150);
       const adsetMeta     = await fetchAllPages(`act_${AD_ACCOUNT_ID}/adsets`,   { fields: 'name,status,start_time,end_time', limit: 200 });
       await delay(150);
-      const adMeta        = await fetchAllPages(`act_${AD_ACCOUNT_ID}/ads`,      { fields: 'name,status,created_time,updated_time', limit: 200 });
+      const adMeta        = await fetchAllPages(`act_${AD_ACCOUNT_ID}/ads`,      { fields: 'name,status,created_time,updated_time,adset_id,creative{thumbnail_url,image_url}', limit: 200 });
       await delay(150);
 
       // Fetch insights broken down by ad_format_asset to get media type data
@@ -3070,13 +3143,27 @@
         };
       });
 
-      // Map ad name → metadata
+      // Map ad name → metadata (including creative thumbnail)
       const adMetaMap = {};
       adMeta.forEach(a => {
         adMetaMap[a.name] = {
           status:       a.status       || null,
-          created_time: a.created_time || null
+          created_time: a.created_time || null,
+          thumbnail_url: (a.creative && a.creative.thumbnail_url) || null,
+          image_url:     (a.creative && a.creative.image_url)     || null
         };
+      });
+
+      // Build adset_name → thumbnail map from ad-level creative data
+      // Each ad has an adset_name from adInsights; we match by ad_name to get the thumbnail
+      const adsetThumbnailMap = {};
+      adInsights.forEach(row => {
+        const adsetName = row.adset_name;
+        if (!adsetName) return;
+        const meta = adMetaMap[row.ad_name];
+        if (meta && (meta.thumbnail_url || meta.image_url) && !adsetThumbnailMap[adsetName]) {
+          adsetThumbnailMap[adsetName] = meta.thumbnail_url || meta.image_url;
+        }
       });
 
       const filterExclude = arr => arr.filter(r => !(r.campaign_name || '').toUpperCase().includes(EXCLUDE_KW));
@@ -3118,7 +3205,8 @@
 
       const adsets = filterExclude(adsetInsights).map(row => {
         const m = adsetMetaMap[row.adset_name] || {};
-        return { ...processRow(row), ...m };
+        const thumb = adsetThumbnailMap[row.adset_name] || null;
+        return { ...processRow(row), ...m, thumbnail_url: thumb };
       });
 
       const ads = filterExclude(adInsights).map(row => {
@@ -3333,10 +3421,13 @@
             start_time: a.start_time, end_time: a.end_time,
             spend: 0, reach: 0, impressions: 0, link_clicks: 0,
             page_engagement: 0, post_engagement: 0, video_3s: 0,
+            thumbnail_url: a.thumbnail_url || null,
           };
         }
         const g = map[label];
         g._count++;
+        // Keep the first available thumbnail
+        if (!g.thumbnail_url && a.thumbnail_url) g.thumbnail_url = a.thumbnail_url;
         // Status: if any is ACTIVE, group is ACTIVE
         if ((a.status||'').toUpperCase() === 'ACTIVE') g.status = 'ACTIVE';
         // Date range: min start → max end
@@ -3373,7 +3464,14 @@
         ? fmtDate(a.start_time) + ' → ' + (a.end_time ? fmtDate(a.end_time) : t('ongoing'))
         : null;
       const countBadge = a._count > 1 ? `<span style="font-size:0.7rem;background:var(--rosa-2);color:var(--corallo);border-radius:20px;padding:2px 8px;margin-left:6px;">${a._count} gruppi</span>` : '';
-      return `<div class="data-card">
+      const thumbHTML = a.thumbnail_url
+        ? `<div class="adset-thumb-wrap">
+            <img src="${a.thumbnail_url}" alt="${(a._label || a.adset_name || '').replace(/"/g, '&quot;')}" class="adset-thumb"
+              onclick="openThumbLightbox('${a.thumbnail_url}', '${(a._label || a.adset_name || '').replace(/'/g, "\\'")}')"
+              onerror="this.parentElement.style.display='none'" loading="lazy" />
+           </div>`
+        : '';
+      return `<div class="data-card ${a.thumbnail_url ? 'has-thumb' : ''}">
         <div class="data-card-header">
           <span class="data-card-title" style="display:flex;align-items:center;gap:6px;">${a._label || a.adset_name}${countBadge}</span>
           ${statusBadge(a.status)}
@@ -3382,6 +3480,7 @@
           ${a.campaign_name}
           ${adsetPeriod ? `<span class="card-period-badge">📅 ${adsetPeriod}</span>` : ''}
         </div>
+        ${thumbHTML}
         <div class="metrics-grid">
           ${mRow(t('spend'), '€ ' + fmt(a.spend), both)}
           ${mRow(t('reach'), fmtInt(a.reach), both)}
