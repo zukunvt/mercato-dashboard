@@ -3208,12 +3208,26 @@
         '\n  sample URL:', Object.values(storyImageMap)[0] || '(none)');
 
       // Fetch insights broken down by ad_format_asset to get media type data
-      const formatBreakdown = await fetchAllPages(`act_${AD_ACCOUNT_ID}/insights`, {
+      let formatBreakdown = await fetchAllPages(`act_${AD_ACCOUNT_ID}/insights`, {
         ...insightsParams,
         level: 'campaign',
         fields: 'campaign_name,spend,actions,cost_per_action_type',
         breakdowns: 'ad_format_asset'
       });
+      // If ad_format_asset returned no data, try media_type breakdown as fallback
+      if (!formatBreakdown || formatBreakdown.length === 0) {
+        console.log('%c[Dashboard] ad_format_asset returned empty, trying media_type breakdown…', 'color:#e65100;font-weight:bold');
+        formatBreakdown = await fetchAllPages(`act_${AD_ACCOUNT_ID}/insights`, {
+          ...insightsParams,
+          level: 'campaign',
+          fields: 'campaign_name,spend,actions,cost_per_action_type',
+          breakdowns: 'media_type'
+        });
+      }
+      console.log('%c[Dashboard] Format breakdown raw data:', 'color:#2e7d32;font-weight:bold',
+        formatBreakdown.length, 'rows',
+        formatBreakdown.length > 0 ? '\n  first row keys: ' + Object.keys(formatBreakdown[0]).join(', ') : '',
+        formatBreakdown.length > 0 ? '\n  sample: ' + JSON.stringify(formatBreakdown[0]).substring(0, 200) : '');
 
       const budgetMap = {};
       budgetData.forEach(c => {
@@ -3311,15 +3325,18 @@
         return { ...processRow(row), ...m };
       });
 
-      // Store ALL raw data — filtering will happen after user selection
-      // Process format breakdown data
+      // Process format breakdown data (handles both ad_format_asset and media_type breakdowns)
       const formatData = filterExclude(formatBreakdown).map(row => ({
         campaign_name: row.campaign_name,
-        ad_format_asset: row.ad_format_asset || 'unknown',
+        ad_format_asset: row.ad_format_asset || row.media_type || 'unknown',
         spend: parseFloat(row.spend || 0),
         page_engagement: extractAction(row.actions, 'page_engagement'),
         cost_per_page_eng: extractCost(row.cost_per_action_type, 'page_engagement')
       }));
+      console.log('%c[Dashboard] formatData processed:', 'color:#2e7d32;font-weight:bold',
+        formatData.length, 'rows',
+        formatData.length > 0 ? '\n  formats found: ' + [...new Set(formatData.map(d => d.ad_format_asset))].join(', ') : '(none)',
+        '\n  rows with engagement > 0:', formatData.filter(d => d.page_engagement > 0).length);
 
       _rawData = { campaigns, adsets, ads, formatData };
       _currentPeriod = { from, to };
@@ -3577,16 +3594,24 @@
               ${mRow(t('clicks'), fmtInt(a.link_clicks))}
               ${mRow(t('eng_post'), fmtInt(a.post_engagement), 'hl-e')}
               ${mRow(t('cost_eng_post'), a.cost_per_post_eng > 0 ? '€ ' + fmt(a.cost_per_post_eng, 3) : '—', 'hl-e')}`;
-      } else {
-        // Traffic / Other: all metrics, highlight traffic-specific
-        const tHL = isT ? 'hl-t' : '';
+      } else if (isT) {
+        // Traffic: only spesa, copertura, impression, click, CPC (highlighted), CTR (highlighted)
         metricsHTML = `
-              ${mRow(t('spend'), '€ ' + fmt(a.spend), tHL)}
-              ${mRow(t('reach'), fmtInt(a.reach), tHL)}
-              ${mRow(t('impressions'), fmtInt(a.impressions), tHL)}
-              ${mRow(t('clicks'), fmtInt(a.link_clicks), tHL)}
+              ${mRow(t('spend'), '€ ' + fmt(a.spend))}
+              ${mRow(t('reach'), fmtInt(a.reach))}
+              ${mRow(t('impressions'), fmtInt(a.impressions))}
+              ${mRow(t('clicks'), fmtInt(a.link_clicks))}
+              ${mRow(t('cpc'), a.cpc > 0 ? '€ ' + fmt(a.cpc, 3) : '—', 'hl-t')}
+              ${mRow(t('ctr'), a.ctr > 0 ? a.ctr.toFixed(3).replace('.',',') + '%' : '—', 'hl-t')}`;
+      } else {
+        // Other: all metrics
+        metricsHTML = `
+              ${mRow(t('spend'), '€ ' + fmt(a.spend))}
+              ${mRow(t('reach'), fmtInt(a.reach))}
+              ${mRow(t('impressions'), fmtInt(a.impressions))}
+              ${mRow(t('clicks'), fmtInt(a.link_clicks))}
               ${mRow(t('cpc'), a.cpc > 0 ? '€ ' + fmt(a.cpc, 3) : '—')}
-              ${mRow(t('ctr'), a.ctr > 0 ? a.ctr.toFixed(3).replace('.',',') + '%' : '—', tHL)}
+              ${mRow(t('ctr'), a.ctr > 0 ? a.ctr.toFixed(3).replace('.',',') + '%' : '—')}
               ${mRow(t('cpm'), a.cpm > 0 ? '€ ' + fmt(a.cpm) : '—')}
               ${mRow(t('eng_page'), fmtInt(a.page_engagement))}
               ${mRow(t('cost_eng_page'), a.cost_per_page_eng > 0 ? '€ ' + fmt(a.cost_per_page_eng, 3) : '—')}
