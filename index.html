@@ -3208,21 +3208,31 @@
         '\n  sample URL:', Object.values(storyImageMap)[0] || '(none)');
 
       // Fetch insights broken down by ad_format_asset to get media type data
-      let formatBreakdown = await fetchAllPages(`act_${AD_ACCOUNT_ID}/insights`, {
-        ...insightsParams,
-        level: 'campaign',
-        fields: 'campaign_name,spend,actions,cost_per_action_type',
-        breakdowns: 'ad_format_asset'
-      });
-      // If ad_format_asset returned no data, try media_type breakdown as fallback
-      if (!formatBreakdown || formatBreakdown.length === 0) {
-        console.log('%c[Dashboard] ad_format_asset returned empty, trying media_type breakdown…', 'color:#e65100;font-weight:bold');
+      let formatBreakdown = [];
+      try {
         formatBreakdown = await fetchAllPages(`act_${AD_ACCOUNT_ID}/insights`, {
           ...insightsParams,
           level: 'campaign',
           fields: 'campaign_name,spend,actions,cost_per_action_type',
-          breakdowns: 'media_type'
+          breakdowns: 'ad_format_asset'
         });
+      } catch(e) {
+        console.log('%c[Dashboard] ad_format_asset breakdown failed:', 'color:#e65100', e.message);
+      }
+      // If ad_format_asset returned no data, try publisher_platform as fallback
+      if (!formatBreakdown || formatBreakdown.length === 0) {
+        console.log('%c[Dashboard] ad_format_asset returned empty, trying publisher_platform…', 'color:#e65100;font-weight:bold');
+        try {
+          formatBreakdown = await fetchAllPages(`act_${AD_ACCOUNT_ID}/insights`, {
+            ...insightsParams,
+            level: 'campaign',
+            fields: 'campaign_name,spend,actions,cost_per_action_type',
+            breakdowns: 'publisher_platform'
+          });
+        } catch(e) {
+          console.log('%c[Dashboard] publisher_platform breakdown also failed:', 'color:#e65100', e.message);
+          formatBreakdown = [];
+        }
       }
       console.log('%c[Dashboard] Format breakdown raw data:', 'color:#2e7d32;font-weight:bold',
         formatBreakdown.length, 'rows',
@@ -3325,10 +3335,10 @@
         return { ...processRow(row), ...m };
       });
 
-      // Process format breakdown data (handles both ad_format_asset and media_type breakdowns)
+      // Process format breakdown data (handles ad_format_asset, media_type, or publisher_platform breakdowns)
       const formatData = filterExclude(formatBreakdown).map(row => ({
         campaign_name: row.campaign_name,
-        ad_format_asset: row.ad_format_asset || row.media_type || 'unknown',
+        ad_format_asset: row.ad_format_asset || row.media_type || row.publisher_platform || 'unknown',
         spend: parseFloat(row.spend || 0),
         page_engagement: extractAction(row.actions, 'page_engagement'),
         cost_per_page_eng: extractCost(row.cost_per_action_type, 'page_engagement')
