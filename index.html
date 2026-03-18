@@ -3554,13 +3554,9 @@
     const adsetCardHTML = (a) => {
       const isE = (a.campaign_name||'').toUpperCase().includes('ENGAGEMENT');
       const isT = (a.campaign_name||'').toUpperCase().includes('TRAFFIC');
-      const both = isE ? 'hl-e' : (isT ? 'hl-t' : '');
-      const tOnly = isT ? 'hl-t' : '';
-      const eOnly = isE ? 'hl-e' : '';
       const adsetPeriod = (a.start_time || a.end_time)
         ? fmtDate(a.start_time) + ' → ' + (a.end_time ? fmtDate(a.end_time) : t('ongoing'))
         : null;
-      const countBadge = a._count > 1 ? `<span style="font-size:0.7rem;background:var(--rosa-2);color:var(--corallo);border-radius:20px;padding:2px 8px;margin-left:6px;">${a._count} gruppi</span>` : '';
       const safeAlt = (a._label || a.adset_name || '').replace(/"/g, '&quot;').replace(/'/g, "\\'");
       const hasImg = !!a.thumbnail_url;
       const thumbHTML = hasImg
@@ -3569,10 +3565,39 @@
               onerror="this.closest('.adset-card-body').classList.remove('has-img');this.parentElement.remove();" loading="lazy" />
            </div>`
         : '';
+
+      // Build metrics based on objective type
+      let metricsHTML = '';
+      if (isE) {
+        // Engagement: only spesa, copertura, impression, click, eng.post (red), costo/eng.post (red)
+        metricsHTML = `
+              ${mRow(t('spend'), '€ ' + fmt(a.spend))}
+              ${mRow(t('reach'), fmtInt(a.reach))}
+              ${mRow(t('impressions'), fmtInt(a.impressions))}
+              ${mRow(t('clicks'), fmtInt(a.link_clicks))}
+              ${mRow(t('eng_post'), fmtInt(a.post_engagement), 'hl-e')}
+              ${mRow(t('cost_eng_post'), a.cost_per_post_eng > 0 ? '€ ' + fmt(a.cost_per_post_eng, 3) : '—', 'hl-e')}`;
+      } else {
+        // Traffic / Other: all metrics, highlight traffic-specific
+        const tHL = isT ? 'hl-t' : '';
+        metricsHTML = `
+              ${mRow(t('spend'), '€ ' + fmt(a.spend), tHL)}
+              ${mRow(t('reach'), fmtInt(a.reach), tHL)}
+              ${mRow(t('impressions'), fmtInt(a.impressions), tHL)}
+              ${mRow(t('clicks'), fmtInt(a.link_clicks), tHL)}
+              ${mRow(t('cpc'), a.cpc > 0 ? '€ ' + fmt(a.cpc, 3) : '—')}
+              ${mRow(t('ctr'), a.ctr > 0 ? a.ctr.toFixed(3).replace('.',',') + '%' : '—', tHL)}
+              ${mRow(t('cpm'), a.cpm > 0 ? '€ ' + fmt(a.cpm) : '—')}
+              ${mRow(t('eng_page'), fmtInt(a.page_engagement))}
+              ${mRow(t('cost_eng_page'), a.cost_per_page_eng > 0 ? '€ ' + fmt(a.cost_per_page_eng, 3) : '—')}
+              ${mRow(t('eng_post'), fmtInt(a.post_engagement))}
+              ${mRow(t('cost_eng_post'), a.cost_per_post_eng > 0 ? '€ ' + fmt(a.cost_per_post_eng, 3) : '—')}
+              ${mRow(t('video_3s'), fmtInt(a.video_3s))}`;
+      }
+
       return `<div class="data-card">
         <div class="data-card-header">
-          <span class="data-card-title" style="display:flex;align-items:center;gap:6px;">${a._label || a.adset_name}${countBadge}</span>
-          ${statusBadge(a.status)}
+          <span class="data-card-title">${a._label || a.adset_name}</span>
         </div>
         <div class="data-card-meta">
           ${a.campaign_name}
@@ -3582,18 +3607,7 @@
           ${thumbHTML}
           <div class="adset-metrics-col">
             <div class="metrics-grid">
-              ${mRow(t('spend'), '€ ' + fmt(a.spend), both)}
-              ${mRow(t('reach'), fmtInt(a.reach), both)}
-              ${mRow(t('impressions'), fmtInt(a.impressions), both)}
-              ${mRow(t('clicks'), fmtInt(a.link_clicks), tOnly)}
-              ${mRow(t('cpc'), a.cpc > 0 ? '€ ' + fmt(a.cpc, 3) : '—')}
-              ${mRow(t('ctr'), a.ctr > 0 ? a.ctr.toFixed(3).replace('.',',') + '%' : '—', tOnly)}
-              ${mRow(t('cpm'), a.cpm > 0 ? '€ ' + fmt(a.cpm) : '—')}
-              ${mRow(t('eng_page'), fmtInt(a.page_engagement), eOnly)}
-              ${mRow(t('cost_eng_page'), a.cost_per_page_eng > 0 ? '€ ' + fmt(a.cost_per_page_eng, 3) : '—', eOnly)}
-              ${mRow(t('eng_post'), fmtInt(a.post_engagement))}
-              ${mRow(t('cost_eng_post'), a.cost_per_post_eng > 0 ? '€ ' + fmt(a.cost_per_post_eng, 3) : '—')}
-              ${mRow(t('video_3s'), fmtInt(a.video_3s))}
+              ${metricsHTML}
             </div>
           </div>
         </div>
