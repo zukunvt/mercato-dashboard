@@ -2493,8 +2493,10 @@
       c7_desc: 'Quale annuncio ha convinto di più le persone a cliccare. Confronto diretto tra creativi.',
       c8_title: 'Efficienza: CPM vs CPC',
       c8_desc: 'Costo per 1000 impression (CPM) vs costo per click (CPC). Aiuta a capire dove si ottiene più valore per euro speso.',
-      c9_title: 'Costo/Eng. Pagina per formato',
-      c9_desc: 'Confronto del costo medio per engagement di pagina tra i diversi formati pubblicitari (Feed, Reel, Stories, ecc.). Più basso è il costo, più il formato è efficiente nel generare interazioni.',
+      c9_title: 'Costo/Eng. Pagina per piattaforma',
+      c9_desc: 'Confronto del costo medio per engagement di pagina tra le piattaforme (Instagram, Facebook). Più basso è il costo, più la piattaforma è efficiente nel generare interazioni.',
+      c10_title: 'Costo/Eng. Pagina per formato',
+      c10_desc: 'Confronto del costo medio per engagement di pagina tra i diversi formati pubblicitari (Feed, Reel, Stories, ecc.). Più basso è il costo, più il formato è efficiente nel generare interazioni.',
       interactions_tooltip: 'interazioni',
       // Glossario
       tab_glossary: 'Glossario',
@@ -2669,8 +2671,10 @@
       c7_desc: 'Welche Anzeige hat mehr Personen zum Klicken bewegt. Direkter Vergleich zwischen Creatives.',
       c8_title: 'Effizienz: CPM vs. CPC',
       c8_desc: 'Kosten pro 1000 Impressionen (CPM) vs. Kosten pro Klick (CPC). Zeigt, wo man den besten Wert pro ausgegebenem Euro erzielt.',
-      c9_title: 'Kosten/Seiteneng. nach Format',
-      c9_desc: 'Vergleich der durchschnittlichen Kosten pro Seitenengagement zwischen den verschiedenen Werbeformaten (Feed, Reel, Stories, usw.). Je niedriger die Kosten, desto effizienter ist das Format bei der Generierung von Interaktionen.',
+      c9_title: 'Kosten/Seiteneng. nach Plattform',
+      c9_desc: 'Vergleich der durchschnittlichen Kosten pro Seitenengagement zwischen den Plattformen (Instagram, Facebook). Je niedriger die Kosten, desto effizienter ist die Plattform bei der Generierung von Interaktionen.',
+      c10_title: 'Kosten/Seiteneng. nach Format',
+      c10_desc: 'Vergleich der durchschnittlichen Kosten pro Seitenengagement zwischen den verschiedenen Werbeformaten (Feed, Reel, Stories, usw.). Je niedriger die Kosten, desto effizienter ist das Format bei der Generierung von Interaktionen.',
       interactions_tooltip: 'Interaktionen',
       // Glossario
       tab_glossary: 'Glossar',
@@ -3091,12 +3095,18 @@
       ],
       ads: [],
       formatData: [
-        { campaign_name: EC, ad_format_asset: 'Feed', spend: 218.39, page_engagement: 46289, cost_per_page_eng: '0.005' },
-        { campaign_name: EC, ad_format_asset: 'Reel/Short-form video', spend: 240.50, page_engagement: 50136, cost_per_page_eng: '0.005' },
-        { campaign_name: EC, ad_format_asset: 'Stories', spend: 0, page_engagement: 0, cost_per_page_eng: null },
-        { campaign_name: TC, ad_format_asset: 'Feed', spend: 107.70, page_engagement: 8040, cost_per_page_eng: '0.013' },
-        { campaign_name: TC, ad_format_asset: 'Stories', spend: 48.60, page_engagement: 3800, cost_per_page_eng: '0.013' },
-        { campaign_name: TC, ad_format_asset: 'Reel/Short-form video', spend: 0, page_engagement: 500, cost_per_page_eng: null },
+        { campaign_name: EC, ad_format_asset: 'instagram', spend: 280.50, page_engagement: 72000, cost_per_page_eng: '0.004' },
+        { campaign_name: EC, ad_format_asset: 'facebook', spend: 178.39, page_engagement: 24425, cost_per_page_eng: '0.007' },
+        { campaign_name: TC, ad_format_asset: 'instagram', spend: 88.60, page_engagement: 7340, cost_per_page_eng: '0.012' },
+        { campaign_name: TC, ad_format_asset: 'facebook', spend: 67.70, page_engagement: 4500, cost_per_page_eng: '0.015' },
+      ],
+      placementData: [
+        { campaign_name: EC, placement: 'Feed', spend: 218.39, page_engagement: 46289, cost_per_page_eng: '0.005' },
+        { campaign_name: EC, placement: 'Reel/Short-form video', spend: 240.50, page_engagement: 50136, cost_per_page_eng: '0.005' },
+        { campaign_name: EC, placement: 'Stories', spend: 0, page_engagement: 0, cost_per_page_eng: null },
+        { campaign_name: TC, placement: 'Feed', spend: 107.70, page_engagement: 8040, cost_per_page_eng: '0.013' },
+        { campaign_name: TC, placement: 'Stories', spend: 48.60, page_engagement: 3800, cost_per_page_eng: '0.013' },
+        { campaign_name: TC, placement: 'Reel/Short-form video', spend: 0, page_engagement: 500, cost_per_page_eng: null },
       ]
     };
   }
@@ -3335,7 +3345,7 @@
         return { ...processRow(row), ...m };
       });
 
-      // Process format breakdown data (handles ad_format_asset, media_type, or publisher_platform breakdowns)
+      // Process format breakdown data (publisher_platform — for "per piattaforma" chart)
       const formatData = filterExclude(formatBreakdown).map(row => ({
         campaign_name: row.campaign_name,
         ad_format_asset: row.ad_format_asset || row.media_type || row.publisher_platform || 'unknown',
@@ -3343,12 +3353,34 @@
         page_engagement: extractAction(row.actions, 'page_engagement'),
         cost_per_page_eng: extractCost(row.cost_per_action_type, 'page_engagement')
       }));
-      console.log('%c[Dashboard] formatData processed:', 'color:#2e7d32;font-weight:bold',
+      console.log('%c[Dashboard] platformData processed:', 'color:#2e7d32;font-weight:bold',
         formatData.length, 'rows',
-        formatData.length > 0 ? '\n  formats found: ' + [...new Set(formatData.map(d => d.ad_format_asset))].join(', ') : '(none)',
-        '\n  rows with engagement > 0:', formatData.filter(d => d.page_engagement > 0).length);
+        formatData.length > 0 ? '\n  platforms found: ' + [...new Set(formatData.map(d => d.ad_format_asset))].join(', ') : '(none)');
 
-      _rawData = { campaigns, adsets, ads, formatData };
+      // Fetch placement/format breakdown (Feed, Reel, Stories etc.) — separate call
+      let placementBreakdown = [];
+      try {
+        placementBreakdown = await fetchAllPages(`act_${AD_ACCOUNT_ID}/insights`, {
+          ...insightsParams,
+          level: 'campaign',
+          fields: 'campaign_name,spend,actions,cost_per_action_type',
+          breakdowns: 'ad_format_asset'
+        });
+      } catch(e) {
+        console.log('%c[Dashboard] ad_format_asset for placement chart failed:', 'color:#e65100', e.message);
+      }
+      const placementData = filterExclude(placementBreakdown).map(row => ({
+        campaign_name: row.campaign_name,
+        placement: row.ad_format_asset || 'unknown',
+        spend: parseFloat(row.spend || 0),
+        page_engagement: extractAction(row.actions, 'page_engagement'),
+        cost_per_page_eng: extractCost(row.cost_per_action_type, 'page_engagement')
+      }));
+      console.log('%c[Dashboard] placementData processed:', 'color:#2e7d32;font-weight:bold',
+        placementData.length, 'rows',
+        placementData.length > 0 ? '\n  placements found: ' + [...new Set(placementData.map(d => d.placement))].join(', ') : '(none)');
+
+      _rawData = { campaigns, adsets, ads, formatData, placementData };
       _currentPeriod = { from, to };
 
       // Fetch real follower counts (FB + IG) — updates UI when ready
@@ -3473,7 +3505,8 @@
       campaigns: _rawData.campaigns.filter(c => sel.has(c.campaign_name)),
       adsets:    _rawData.adsets.filter(c => sel.has(c.campaign_name)),
       ads:       (_rawData.ads || []).filter(c => sel.has(c.campaign_name)),
-      formatData: (_rawData.formatData || []).filter(c => sel.has(c.campaign_name))
+      formatData: (_rawData.formatData || []).filter(c => sel.has(c.campaign_name)),
+      placementData: (_rawData.placementData || []).filter(c => sel.has(c.campaign_name))
     };
 
     renderResults(_currentPeriod, filtered);
@@ -4007,7 +4040,7 @@
 
       <div class="charts-section-title" style="margin-top:28px">
         <span class="cs-dot e"></span>
-        ${_lang==='de' ? 'Effizienz nach Format' : 'Efficienza per formato'}
+        ${_lang==='de' ? 'Effizienz nach Plattform & Format' : 'Efficienza per piattaforma e formato'}
       </div>
       <div class="chart-grid">
         <div class="chart-card" style="grid-column: 1 / -1;">
@@ -4015,6 +4048,12 @@
           <h3>${t('c9_title')}</h3>
           <p class="chart-desc">${t('c9_desc')}</p>
           <canvas id="c9" style="max-height:280px"></canvas>
+        </div>
+        <div class="chart-card" style="grid-column: 1 / -1;">
+          ${zoomBtn('c10')}
+          <h3>${t('c10_title')}</h3>
+          <p class="chart-desc">${t('c10_desc')}</p>
+          <canvas id="c10" style="max-height:320px"></canvas>
         </div>
       </div>
     `;
@@ -4306,6 +4345,92 @@
       };
       window._chartConfigs['c9'] = c9Cfg;
       new Chart(document.getElementById('c9'), c9Cfg);
+    }
+
+    // ── c10: Cost per Page Engagement by Placement/Format (Feed, Reel, Stories etc.) ──
+    const rawPlacementData = data.placementData || [];
+    const placementMap = {};
+    rawPlacementData.forEach(row => {
+      const fmt = row.placement || (_lang === 'de' ? 'Unbekannt' : 'Sconosciuto');
+      if (!placementMap[fmt]) {
+        placementMap[fmt] = { spend: 0, page_engagement: 0, count: 0 };
+      }
+      placementMap[fmt].spend += parseFloat(row.spend || 0);
+      placementMap[fmt].page_engagement += parseInt(row.page_engagement || 0);
+      placementMap[fmt].count++;
+    });
+
+    const placementChartData = Object.entries(placementMap)
+      .filter(([_, v]) => v.page_engagement > 0 && v.spend > 0)
+      .map(([fmt, v]) => ({
+        format: fmt,
+        cost_per_eng: v.spend / v.page_engagement,
+        spend: v.spend,
+        page_engagement: v.page_engagement,
+        count: v.count
+      }))
+      .sort((a, b) => a.cost_per_eng - b.cost_per_eng);
+
+    if (placementChartData.length > 0) {
+      const plLabels = placementChartData.map(d => d.format);
+      const plValues = placementChartData.map(d => parseFloat(d.cost_per_eng.toFixed(4)));
+
+      const c10Cfg = {
+        type: 'bar',
+        data: {
+          labels: plLabels,
+          datasets: [{
+            data: plValues,
+            backgroundColor: placementChartData.map((d, i) => {
+              const ratio = placementChartData.length > 1 ? i / (placementChartData.length - 1) : 0;
+              if (ratio <= 0.33) return '#2d8a55cc';
+              if (ratio <= 0.66) return '#ca5c4acc';
+              return '#bb2317cc';
+            }),
+            borderRadius: 6,
+            barThickness: 32
+          }]
+        },
+        options: {
+          ...commonOpts,
+          indexAxis: 'y',
+          scales: {
+            x: {
+              ticks: { font: { size: 11 }, callback: v => '€ ' + v.toFixed(3) },
+              grid: { color: '#f7e3e2' },
+              border: { display: false },
+              title: { display: true, text: _lang === 'de' ? 'Kosten pro Seitenengagement (€)' : 'Costo per Eng. Pagina (€)', font: { size: 11 }, color: '#dd9388' }
+            },
+            y: {
+              ticks: { font: { size: 13, weight: '600' }, color: '#210d09' },
+              grid: { display: false },
+              border: { display: false }
+            }
+          },
+          plugins: {
+            ...commonOpts.plugins,
+            tooltip: {
+              callbacks: {
+                title: ctx => {
+                  const i = ctx[0].dataIndex;
+                  return placementChartData[i].format;
+                },
+                label: ctx => {
+                  const i = ctx.dataIndex;
+                  const d = placementChartData[i];
+                  return [
+                    ' ' + (_lang === 'de' ? 'Kosten/Eng.' : 'Costo/Eng.') + ': € ' + d.cost_per_eng.toFixed(4).replace('.', ','),
+                    ' ' + (_lang === 'de' ? 'Ausgaben' : 'Spesa') + ': € ' + d.spend.toFixed(2).replace('.', ','),
+                    ' ' + (_lang === 'de' ? 'Engagement' : 'Engagement') + ': ' + d.page_engagement.toLocaleString('it-IT')
+                  ];
+                }
+              }
+            }
+          }
+        }
+      };
+      window._chartConfigs['c10'] = c10Cfg;
+      new Chart(document.getElementById('c10'), c10Cfg);
     }
   }
 
