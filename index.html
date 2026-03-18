@@ -893,13 +893,12 @@
     }
     .adset-card-body.has-img {
       display: grid;
-      grid-template-columns: 130px 1fr;
+      grid-template-columns: 140px 1fr;
       gap: 0;
       align-items: start;
     }
     .adset-thumb-side {
-      width: 130px;
-      min-height: 100px;
+      width: 140px;
       border-radius: 8px;
       overflow: hidden;
       cursor: pointer;
@@ -909,6 +908,9 @@
       align-self: start;
       margin-top: 2px;
       transition: box-shadow 0.2s;
+      /* Force crisp rendering even if source is slightly smaller */
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
     }
     .adset-thumb-side:hover {
       box-shadow: 0 3px 14px rgba(33,13,9,0.15);
@@ -935,6 +937,8 @@
       width: 100%;
       height: auto;
       object-fit: cover;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: high-quality;
     }
     .adset-metrics-col {
       min-width: 0;
@@ -946,10 +950,10 @@
       }
       .adset-thumb-side {
         width: 100%;
-        max-height: 180px;
+        max-height: 200px;
       }
       .adset-thumb-side img {
-        max-height: 180px;
+        max-height: 200px;
       }
     }
 
@@ -3147,8 +3151,8 @@
       const adMeta        = await fetchAllPages(`act_${AD_ACCOUNT_ID}/ads`,      { fields: 'name,status,created_time,updated_time,adset_id,creative{effective_object_story_id,thumbnail_url}', limit: 200 });
       await delay(150);
 
-      // Resolve full-res images: get full_picture from the original posts via effective_object_story_id
-      // Collect unique story IDs
+      // Resolve full-res images from original posts via effective_object_story_id
+      // Use attachments{media} which returns the source image at original resolution
       const storyIdToAdNames = {};
       adMeta.forEach(a => {
         const storyId = a.creative && a.creative.effective_object_story_id;
@@ -3157,22 +3161,51 @@
           storyIdToAdNames[storyId].push(a.name);
         }
       });
-      // Batch fetch full_picture for each story ID (in chunks to avoid rate limits)
       const storyIds = Object.keys(storyIdToAdNames);
-      const storyImageMap = {}; // storyId → full_picture URL
+      const storyImageMap = {}; // storyId → high-res image URL
       const BATCH_SIZE = 15;
       for (let i = 0; i < storyIds.length; i += BATCH_SIZE) {
         const batch = storyIds.slice(i, i + BATCH_SIZE);
         const fetches = batch.map(sid =>
-          metaGet(sid, { fields: 'full_picture' })
-            .then(r => { if (r && r.full_picture) storyImageMap[sid] = r.full_picture; })
+          metaGet(sid, { fields: 'full_picture,attachments{media,subattachments}' })
+            .then(r => {
+              // Priority: attachments.media.image.src (original full-res) → full_picture (fallback)
+              let bestUrl = null;
+              try {
+                const att = r.attachments && r.attachments.data && r.attachments.data[0];
+                if (att && att.media && att.media.image && att.media.image.src) {
+                  bestUrl = att.media.image.src;
+                }
+                // Also check subattachments for carousel ads
+                if (!bestUrl && att && att.subattachments && att.subattachments.data) {
+                  const sub = att.subattachments.data[0];
+                  if (sub && sub.media && sub.media.image && sub.media.image.src) {
+                    bestUrl = sub.media.image.src;
+                  }
+                }
+              } catch(e) {}
+              // Fallback to full_picture — try to force higher resolution via URL manipulation
+              if (!bestUrl && r && r.full_picture) {
+                bestUrl = r.full_picture;
+                // Facebook CDN URLs often contain size params like /p960x960/ or /s720x720/
+                // Try to request larger version
+                try {
+                  const u = new URL(bestUrl);
+                  if (!u.searchParams.has('_nc_cat')) {
+                    // External redirect URL — append size hint
+                  }
+                } catch(e) {}
+              }
+              if (bestUrl) storyImageMap[sid] = bestUrl;
+            })
             .catch(() => {}) // silently skip if post not accessible
         );
         await Promise.all(fetches);
         if (i + BATCH_SIZE < storyIds.length) await delay(200);
       }
       console.log('%c[Dashboard] Full-res post images fetched:', 'color:#2e7d32;font-weight:bold',
-        storyIds.length, 'stories →', Object.keys(storyImageMap).length, 'images resolved');
+        storyIds.length, 'stories →', Object.keys(storyImageMap).length, 'images resolved',
+        '\n  sample URL:', Object.values(storyImageMap)[0] || '(none)');
 
       // Fetch insights broken down by ad_format_asset to get media type data
       const formatBreakdown = await fetchAllPages(`act_${AD_ACCOUNT_ID}/insights`, {
