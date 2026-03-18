@@ -3357,21 +3357,21 @@
         formatData.length, 'rows',
         formatData.length > 0 ? '\n  platforms found: ' + [...new Set(formatData.map(d => d.ad_format_asset))].join(', ') : '(none)');
 
-      // Fetch placement/format breakdown (Feed, Reel, Stories etc.) — separate call
+      // Fetch placement breakdown (Feed, Story, Reels, etc.) via platform_position
       let placementBreakdown = [];
       try {
         placementBreakdown = await fetchAllPages(`act_${AD_ACCOUNT_ID}/insights`, {
           ...insightsParams,
           level: 'campaign',
           fields: 'campaign_name,spend,actions,cost_per_action_type',
-          breakdowns: 'ad_format_asset'
+          breakdowns: 'platform_position'
         });
       } catch(e) {
-        console.log('%c[Dashboard] ad_format_asset for placement chart failed:', 'color:#e65100', e.message);
+        console.log('%c[Dashboard] platform_position breakdown failed:', 'color:#e65100', e.message);
       }
       const placementData = filterExclude(placementBreakdown).map(row => ({
         campaign_name: row.campaign_name,
-        placement: row.ad_format_asset || 'unknown',
+        placement: row.platform_position || 'unknown',
         spend: parseFloat(row.spend || 0),
         page_engagement: extractAction(row.actions, 'page_engagement'),
         cost_per_page_eng: extractCost(row.cost_per_action_type, 'page_engagement')
@@ -4047,13 +4047,13 @@
           ${zoomBtn('c9')}
           <h3>${t('c9_title')}</h3>
           <p class="chart-desc">${t('c9_desc')}</p>
-          <canvas id="c9" style="max-height:280px"></canvas>
+          <canvas id="c9" style="min-height:120px;max-height:220px"></canvas>
         </div>
         <div class="chart-card" style="grid-column: 1 / -1;">
           ${zoomBtn('c10')}
           <h3>${t('c10_title')}</h3>
           <p class="chart-desc">${t('c10_desc')}</p>
-          <canvas id="c10" style="max-height:320px"></canvas>
+          <canvas id="c10" style="min-height:140px;max-height:360px"></canvas>
         </div>
       </div>
     `;
@@ -4294,18 +4294,18 @@
           datasets: [{
             data: formatValues,
             backgroundColor: formatChartData.map((d, i) => {
-              // Gradient from green (efficient) to red (expensive)
               const ratio = formatChartData.length > 1 ? i / (formatChartData.length - 1) : 0;
               if (ratio <= 0.33) return '#2d8a55cc';
               if (ratio <= 0.66) return '#ca5c4acc';
               return '#bb2317cc';
             }),
             borderRadius: 6,
-            barThickness: 32
+            barThickness: 36
           }]
         },
         options: {
           ...commonOpts,
+          maintainAspectRatio: false,
           indexAxis: 'y',
           scales: {
             x: {
@@ -4388,11 +4388,12 @@
               return '#bb2317cc';
             }),
             borderRadius: 6,
-            barThickness: 32
+            barThickness: 36
           }]
         },
         options: {
           ...commonOpts,
+          maintainAspectRatio: false,
           indexAxis: 'y',
           scales: {
             x: {
