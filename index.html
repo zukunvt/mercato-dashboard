@@ -2495,8 +2495,8 @@
       c8_desc: 'Costo per 1000 impression (CPM) vs costo per click (CPC). Aiuta a capire dove si ottiene più valore per euro speso.',
       c9_title: 'Costo/Eng. Pagina per piattaforma',
       c9_desc: 'Confronto del costo medio per engagement di pagina tra le piattaforme (Instagram, Facebook). Più basso è il costo, più la piattaforma è efficiente nel generare interazioni.',
-      c10_title: 'Costo/Eng. Pagina per formato',
-      c10_desc: 'Confronto del costo medio per engagement di pagina tra i diversi formati pubblicitari (Feed, Reel, Stories, ecc.). Più basso è il costo, più il formato è efficiente nel generare interazioni.',
+      c10_title: 'Efficienza per posizionamento',
+      c10_desc: 'Confronto dell\'efficienza tra i diversi posizionamenti (Feed, Reel, Stories, Explore, ecc.). Mostra il costo per engagement o il CPM a seconda dei dati disponibili.',
       interactions_tooltip: 'interazioni',
       // Glossario
       tab_glossary: 'Glossario',
@@ -2673,8 +2673,8 @@
       c8_desc: 'Kosten pro 1000 Impressionen (CPM) vs. Kosten pro Klick (CPC). Zeigt, wo man den besten Wert pro ausgegebenem Euro erzielt.',
       c9_title: 'Kosten/Seiteneng. nach Plattform',
       c9_desc: 'Vergleich der durchschnittlichen Kosten pro Seitenengagement zwischen den Plattformen (Instagram, Facebook). Je niedriger die Kosten, desto effizienter ist die Plattform bei der Generierung von Interaktionen.',
-      c10_title: 'Kosten/Seiteneng. nach Format',
-      c10_desc: 'Vergleich der durchschnittlichen Kosten pro Seitenengagement zwischen den verschiedenen Werbeformaten (Feed, Reel, Stories, usw.). Je niedriger die Kosten, desto effizienter ist das Format bei der Generierung von Interaktionen.',
+      c10_title: 'Effizienz nach Platzierung',
+      c10_desc: 'Vergleich der Effizienz zwischen den verschiedenen Platzierungen (Feed, Reel, Stories, Explore, usw.). Zeigt Kosten pro Engagement oder CPM je nach verfügbaren Daten.',
       interactions_tooltip: 'Interaktionen',
       // Glossario
       tab_glossary: 'Glossar',
@@ -3357,28 +3357,42 @@
         formatData.length, 'rows',
         formatData.length > 0 ? '\n  platforms found: ' + [...new Set(formatData.map(d => d.ad_format_asset))].join(', ') : '(none)');
 
-      // Fetch placement breakdown (Feed, Story, Reels, etc.) via platform_position
+      // Fetch placement breakdown (Feed, Story, Reels, etc.)
+      // platform_position with actions can be invalid — use spend/impressions only
       let placementBreakdown = [];
+      // Try platform_position first (feed, story, reels, explore, etc.)
       try {
         placementBreakdown = await fetchAllPages(`act_${AD_ACCOUNT_ID}/insights`, {
           ...insightsParams,
           level: 'campaign',
-          fields: 'campaign_name,spend,actions,cost_per_action_type',
+          fields: 'campaign_name,spend,impressions,actions,cost_per_action_type',
           breakdowns: 'platform_position'
         });
       } catch(e) {
-        console.log('%c[Dashboard] platform_position breakdown failed:', 'color:#e65100', e.message);
+        console.log('%c[Dashboard] platform_position with actions failed, retrying without actions…', 'color:#e65100', e.message);
+        try {
+          placementBreakdown = await fetchAllPages(`act_${AD_ACCOUNT_ID}/insights`, {
+            ...insightsParams,
+            level: 'campaign',
+            fields: 'campaign_name,spend,impressions',
+            breakdowns: 'platform_position'
+          });
+        } catch(e2) {
+          console.log('%c[Dashboard] platform_position breakdown fully failed:', 'color:#e65100', e2.message);
+        }
       }
       const placementData = filterExclude(placementBreakdown).map(row => ({
         campaign_name: row.campaign_name,
         placement: row.platform_position || 'unknown',
         spend: parseFloat(row.spend || 0),
-        page_engagement: extractAction(row.actions, 'page_engagement'),
-        cost_per_page_eng: extractCost(row.cost_per_action_type, 'page_engagement')
+        impressions: parseInt(row.impressions || 0),
+        page_engagement: row.actions ? extractAction(row.actions, 'page_engagement') : 0,
+        cost_per_page_eng: row.cost_per_action_type ? extractCost(row.cost_per_action_type, 'page_engagement') : null
       }));
       console.log('%c[Dashboard] placementData processed:', 'color:#2e7d32;font-weight:bold',
         placementData.length, 'rows',
-        placementData.length > 0 ? '\n  placements found: ' + [...new Set(placementData.map(d => d.placement))].join(', ') : '(none)');
+        placementData.length > 0 ? '\n  placements found: ' + [...new Set(placementData.map(d => d.placement))].join(', ') : '(none)',
+        '\n  rows with spend > 0:', placementData.filter(d => d.spend > 0).length);
 
       _rawData = { campaigns, adsets, ads, formatData, placementData };
       _currentPeriod = { from, to };
@@ -4353,27 +4367,55 @@
     rawPlacementData.forEach(row => {
       const fmt = row.placement || (_lang === 'de' ? 'Unbekannt' : 'Sconosciuto');
       if (!placementMap[fmt]) {
-        placementMap[fmt] = { spend: 0, page_engagement: 0, count: 0 };
+        placementMap[fmt] = { spend: 0, page_engagement: 0, impressions: 0, count: 0 };
       }
       placementMap[fmt].spend += parseFloat(row.spend || 0);
       placementMap[fmt].page_engagement += parseInt(row.page_engagement || 0);
+      placementMap[fmt].impressions += parseInt(row.impressions || 0);
       placementMap[fmt].count++;
     });
 
-    const placementChartData = Object.entries(placementMap)
-      .filter(([_, v]) => v.page_engagement > 0 && v.spend > 0)
-      .map(([fmt, v]) => ({
-        format: fmt,
-        cost_per_eng: v.spend / v.page_engagement,
-        spend: v.spend,
-        page_engagement: v.page_engagement,
-        count: v.count
-      }))
-      .sort((a, b) => a.cost_per_eng - b.cost_per_eng);
+    // Check if we have engagement data — if yes, show cost/eng; if not, show CPM (spend per 1k impressions)
+    const hasEngData = Object.values(placementMap).some(v => v.page_engagement > 0);
+
+    let placementChartData;
+    let c10MetricLabel, c10AxisLabel, c10TooltipFmt;
+
+    if (hasEngData) {
+      // Cost per page engagement
+      placementChartData = Object.entries(placementMap)
+        .filter(([_, v]) => v.page_engagement > 0 && v.spend > 0)
+        .map(([fmt, v]) => ({
+          format: fmt,
+          metric_value: v.spend / v.page_engagement,
+          spend: v.spend,
+          page_engagement: v.page_engagement,
+          impressions: v.impressions
+        }))
+        .sort((a, b) => a.metric_value - b.metric_value);
+      c10MetricLabel = _lang === 'de' ? 'Kosten/Eng.' : 'Costo/Eng.';
+      c10AxisLabel = _lang === 'de' ? 'Kosten pro Seitenengagement (€)' : 'Costo per Eng. Pagina (€)';
+      c10TooltipFmt = d => '€ ' + d.metric_value.toFixed(4).replace('.', ',');
+    } else {
+      // Fallback: CPM (cost per 1k impressions) by placement
+      placementChartData = Object.entries(placementMap)
+        .filter(([_, v]) => v.impressions > 0 && v.spend > 0)
+        .map(([fmt, v]) => ({
+          format: fmt,
+          metric_value: v.spend / v.impressions * 1000,
+          spend: v.spend,
+          page_engagement: v.page_engagement,
+          impressions: v.impressions
+        }))
+        .sort((a, b) => a.metric_value - b.metric_value);
+      c10MetricLabel = 'CPM';
+      c10AxisLabel = _lang === 'de' ? 'CPM — Kosten pro 1.000 Impressionen (€)' : 'CPM — Costo per 1.000 impression (€)';
+      c10TooltipFmt = d => '€ ' + d.metric_value.toFixed(2).replace('.', ',');
+    }
 
     if (placementChartData.length > 0) {
       const plLabels = placementChartData.map(d => d.format);
-      const plValues = placementChartData.map(d => parseFloat(d.cost_per_eng.toFixed(4)));
+      const plValues = placementChartData.map(d => parseFloat(d.metric_value.toFixed(4)));
 
       const c10Cfg = {
         type: 'bar',
@@ -4400,7 +4442,7 @@
               ticks: { font: { size: 11 }, callback: v => '€ ' + v.toFixed(3) },
               grid: { color: '#f7e3e2' },
               border: { display: false },
-              title: { display: true, text: _lang === 'de' ? 'Kosten pro Seitenengagement (€)' : 'Costo per Eng. Pagina (€)', font: { size: 11 }, color: '#dd9388' }
+              title: { display: true, text: c10AxisLabel, font: { size: 11 }, color: '#dd9388' }
             },
             y: {
               ticks: { font: { size: 13, weight: '600' }, color: '#210d09' },
@@ -4419,11 +4461,13 @@
                 label: ctx => {
                   const i = ctx.dataIndex;
                   const d = placementChartData[i];
-                  return [
-                    ' ' + (_lang === 'de' ? 'Kosten/Eng.' : 'Costo/Eng.') + ': € ' + d.cost_per_eng.toFixed(4).replace('.', ','),
+                  const lines = [
+                    ' ' + c10MetricLabel + ': ' + c10TooltipFmt(d),
                     ' ' + (_lang === 'de' ? 'Ausgaben' : 'Spesa') + ': € ' + d.spend.toFixed(2).replace('.', ','),
-                    ' ' + (_lang === 'de' ? 'Engagement' : 'Engagement') + ': ' + d.page_engagement.toLocaleString('it-IT')
                   ];
+                  if (d.impressions > 0) lines.push(' Impression: ' + d.impressions.toLocaleString('it-IT'));
+                  if (d.page_engagement > 0) lines.push(' Engagement: ' + d.page_engagement.toLocaleString('it-IT'));
+                  return lines;
                 }
               }
             }
