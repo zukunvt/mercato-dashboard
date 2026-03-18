@@ -886,38 +886,71 @@
       margin-left: 2px;
     }
 
-    /* ── Ad creative thumbnail inside adset cards ── */
-    .adset-thumb-wrap {
-      margin: 8px 0 12px;
+    /* ── Ad creative image — side-by-side layout inside adset cards ── */
+    .adset-card-body {
+      display: flex;
+      flex-direction: column;
+    }
+    .adset-card-body.has-img {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 0;
+      align-items: start;
+    }
+    .adset-thumb-side {
+      width: 130px;
+      min-height: 100px;
       border-radius: 8px;
       overflow: hidden;
+      cursor: pointer;
+      position: relative;
       background: var(--rosa-1);
       border: 1px solid rgba(33,13,9,0.06);
-      position: relative;
+      align-self: start;
+      margin-top: 2px;
+      transition: box-shadow 0.2s;
     }
-    .adset-thumb-wrap::after {
-      content: '🖼';
+    .adset-thumb-side:hover {
+      box-shadow: 0 3px 14px rgba(33,13,9,0.15);
+    }
+    .adset-thumb-side::after {
+      content: '🔍';
       position: absolute;
-      top: 6px;
-      right: 6px;
-      font-size: 0.65rem;
-      background: rgba(255,255,255,0.85);
-      border-radius: 6px;
-      padding: 2px 6px;
+      bottom: 5px;
+      right: 5px;
+      font-size: 0.6rem;
+      background: rgba(255,255,255,0.88);
+      border-radius: 5px;
+      padding: 2px 5px;
       line-height: 1;
       pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
     }
-    .adset-thumb {
+    .adset-thumb-side:hover::after {
+      opacity: 1;
+    }
+    .adset-thumb-side img {
       display: block;
       width: 100%;
       height: auto;
-      max-height: 200px;
       object-fit: cover;
-      cursor: pointer;
-      transition: transform 0.25s ease;
     }
-    .adset-thumb:hover {
-      transform: scale(1.02);
+    .adset-metrics-col {
+      min-width: 0;
+    }
+    /* On narrow cards / mobile, stack vertically */
+    @media (max-width: 420px) {
+      .adset-card-body.has-img {
+        grid-template-columns: 1fr;
+      }
+      .adset-thumb-side {
+        width: 100%;
+        max-height: 180px;
+      }
+      .adset-thumb-side img {
+        max-height: 180px;
+      }
     }
 
     /* Fullscreen lightbox for ad images */
@@ -3154,15 +3187,15 @@
         };
       });
 
-      // Build adset_name → thumbnail map from ad-level creative data
-      // Each ad has an adset_name from adInsights; we match by ad_name to get the thumbnail
+      // Build adset_name → image map from ad-level creative data
+      // Prefer image_url (full resolution) over thumbnail_url (tiny/pixelated)
       const adsetThumbnailMap = {};
       adInsights.forEach(row => {
         const adsetName = row.adset_name;
         if (!adsetName) return;
         const meta = adMetaMap[row.ad_name];
-        if (meta && (meta.thumbnail_url || meta.image_url) && !adsetThumbnailMap[adsetName]) {
-          adsetThumbnailMap[adsetName] = meta.thumbnail_url || meta.image_url;
+        if (meta && (meta.image_url || meta.thumbnail_url) && !adsetThumbnailMap[adsetName]) {
+          adsetThumbnailMap[adsetName] = meta.image_url || meta.thumbnail_url;
         }
       });
 
@@ -3464,14 +3497,15 @@
         ? fmtDate(a.start_time) + ' → ' + (a.end_time ? fmtDate(a.end_time) : t('ongoing'))
         : null;
       const countBadge = a._count > 1 ? `<span style="font-size:0.7rem;background:var(--rosa-2);color:var(--corallo);border-radius:20px;padding:2px 8px;margin-left:6px;">${a._count} gruppi</span>` : '';
-      const thumbHTML = a.thumbnail_url
-        ? `<div class="adset-thumb-wrap">
-            <img src="${a.thumbnail_url}" alt="${(a._label || a.adset_name || '').replace(/"/g, '&quot;')}" class="adset-thumb"
-              onclick="openThumbLightbox('${a.thumbnail_url}', '${(a._label || a.adset_name || '').replace(/'/g, "\\'")}')"
-              onerror="this.parentElement.style.display='none'" loading="lazy" />
+      const safeAlt = (a._label || a.adset_name || '').replace(/"/g, '&quot;').replace(/'/g, "\\'");
+      const hasImg = !!a.thumbnail_url;
+      const thumbHTML = hasImg
+        ? `<div class="adset-thumb-side" onclick="openThumbLightbox('${a.thumbnail_url}', '${safeAlt}')">
+            <img src="${a.thumbnail_url}" alt="${safeAlt}" 
+              onerror="this.closest('.adset-card-body').classList.remove('has-img');this.parentElement.remove();" loading="lazy" />
            </div>`
         : '';
-      return `<div class="data-card ${a.thumbnail_url ? 'has-thumb' : ''}">
+      return `<div class="data-card">
         <div class="data-card-header">
           <span class="data-card-title" style="display:flex;align-items:center;gap:6px;">${a._label || a.adset_name}${countBadge}</span>
           ${statusBadge(a.status)}
@@ -3480,20 +3514,24 @@
           ${a.campaign_name}
           ${adsetPeriod ? `<span class="card-period-badge">📅 ${adsetPeriod}</span>` : ''}
         </div>
-        ${thumbHTML}
-        <div class="metrics-grid">
-          ${mRow(t('spend'), '€ ' + fmt(a.spend), both)}
-          ${mRow(t('reach'), fmtInt(a.reach), both)}
-          ${mRow(t('impressions'), fmtInt(a.impressions), both)}
-          ${mRow(t('clicks'), fmtInt(a.link_clicks), tOnly)}
-          ${mRow(t('cpc'), a.cpc > 0 ? '€ ' + fmt(a.cpc, 3) : '—')}
-          ${mRow(t('ctr'), a.ctr > 0 ? a.ctr.toFixed(3).replace('.',',') + '%' : '—', tOnly)}
-          ${mRow(t('cpm'), a.cpm > 0 ? '€ ' + fmt(a.cpm) : '—')}
-          ${mRow(t('eng_page'), fmtInt(a.page_engagement), eOnly)}
-          ${mRow(t('cost_eng_page'), a.cost_per_page_eng > 0 ? '€ ' + fmt(a.cost_per_page_eng, 3) : '—', eOnly)}
-          ${mRow(t('eng_post'), fmtInt(a.post_engagement))}
-          ${mRow(t('cost_eng_post'), a.cost_per_post_eng > 0 ? '€ ' + fmt(a.cost_per_post_eng, 3) : '—')}
-          ${mRow(t('video_3s'), fmtInt(a.video_3s))}
+        <div class="adset-card-body ${hasImg ? 'has-img' : ''}">
+          ${thumbHTML}
+          <div class="adset-metrics-col">
+            <div class="metrics-grid">
+              ${mRow(t('spend'), '€ ' + fmt(a.spend), both)}
+              ${mRow(t('reach'), fmtInt(a.reach), both)}
+              ${mRow(t('impressions'), fmtInt(a.impressions), both)}
+              ${mRow(t('clicks'), fmtInt(a.link_clicks), tOnly)}
+              ${mRow(t('cpc'), a.cpc > 0 ? '€ ' + fmt(a.cpc, 3) : '—')}
+              ${mRow(t('ctr'), a.ctr > 0 ? a.ctr.toFixed(3).replace('.',',') + '%' : '—', tOnly)}
+              ${mRow(t('cpm'), a.cpm > 0 ? '€ ' + fmt(a.cpm) : '—')}
+              ${mRow(t('eng_page'), fmtInt(a.page_engagement), eOnly)}
+              ${mRow(t('cost_eng_page'), a.cost_per_page_eng > 0 ? '€ ' + fmt(a.cost_per_page_eng, 3) : '—', eOnly)}
+              ${mRow(t('eng_post'), fmtInt(a.post_engagement))}
+              ${mRow(t('cost_eng_post'), a.cost_per_post_eng > 0 ? '€ ' + fmt(a.cost_per_post_eng, 3) : '—')}
+              ${mRow(t('video_3s'), fmtInt(a.video_3s))}
+            </div>
+          </div>
         </div>
       </div>`;
     };
