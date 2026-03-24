@@ -3999,10 +3999,8 @@
     const c4 = sortedFor(asItems, aLabels, asFull, a => a.page_engagement);
     mkPolar('c4', c4.labels, c4.values, PAL5, c4.fullNames, c4.dates);
 
-    // ── c9: Cost per Page Engagement by Format — using mkHBar like c1-c4 ──
+    // ── c9: debug + render ──
     const rawFormatData = data.formatData || [];
-
-    // Group by ad_format_asset, sum spend and page_engagement
     const fmtMap = {};
     rawFormatData.forEach(row => {
       const key = row.ad_format_asset || 'Altro';
@@ -4010,12 +4008,24 @@
       fmtMap[key].spend += parseFloat(row.spend || 0);
       fmtMap[key].page_engagement += parseInt(row.page_engagement || 0);
     });
-
-    // Build chart data: cost per engagement, filter zeros, sort ascending (cheapest first)
     const c9Items = Object.entries(fmtMap)
       .filter(([_, v]) => v.page_engagement > 0 && v.spend > 0)
       .map(([fmt, v]) => ({ fmt, val: parseFloat((v.spend / v.page_engagement).toFixed(4)) }))
       .sort((a, b) => a.val - b.val);
+
+    // ── VISIBLE DEBUG PANEL ──
+    const c9debugEl = document.getElementById('c9')?.closest('.chart-card');
+    if (c9debugEl) {
+      const dbg = document.createElement('div');
+      dbg.style.cssText = 'background:#f7e3e2;border:1px solid #ca5c4a;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.78rem;color:#210d09;font-family:monospace;';
+      dbg.innerHTML = '<strong>DEBUG c9</strong><br>' +
+        'data.formatData rows: <strong>' + rawFormatData.length + '</strong><br>' +
+        'fmtMap keys: <strong>' + Object.keys(fmtMap).join(', ') + '</strong><br>' +
+        'c9Items after filter: <strong>' + c9Items.length + '</strong><br>' +
+        (c9Items.length > 0 ? 'Items: ' + c9Items.map(x => x.fmt + '=€' + x.val).join(' | ') : '<span style="color:red">VUOTO — nessun formato con spend>0 e engagement>0</span>') +
+        '<br>Raw rows: ' + rawFormatData.map(r => (r.ad_format_asset||'?') + ':spend=' + r.spend + ',eng=' + r.page_engagement).join(' | ');
+      c9debugEl.insertBefore(dbg, document.getElementById('c9'));
+    }
 
     if (c9Items.length > 0) {
       const c9Labels = c9Items.map(d => d.fmt);
