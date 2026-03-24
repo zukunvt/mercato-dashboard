@@ -1195,6 +1195,7 @@
       line-height: 1.5;
     }
     .chart-card canvas { max-height: 240px; width: 100% !important; }
+    #tab-charts #c9 { min-height: 180px; display: block; }
 
     .zoom-btn {
       position: absolute;
@@ -3792,11 +3793,11 @@
         ${_lang==='de' ? 'Effizienz nach Format' : 'Efficienza per formato'}
       </div>
       <div class="chart-grid">
-        <div class="chart-card" style="grid-column: 1 / -1;">
+        <div class="chart-card" style="grid-column: 1 / -1;min-height:280px;">
           ${zoomBtn('c9')}
           <h3>${t('c9_title')}</h3>
           <p class="chart-desc">${t('c9_desc')}</p>
-          <canvas id="c9" style="height:220px;width:100%;"></canvas>
+          <canvas id="c9" style="min-height:180px;max-height:280px;width:100%;display:block;"></canvas>
         </div>
       </div>
     `;
@@ -4042,6 +4043,11 @@
       const formatLabels = formatChartData.map(d => d.format);
       const formatValues = formatChartData.map(d => parseFloat(d.cost_per_eng.toFixed(4)));
 
+      // Use setTimeout to ensure canvas is in DOM with computed dimensions
+      setTimeout(() => {
+      const c9el = document.getElementById('c9');
+      if (!c9el) { console.warn('[c9] canvas not found in DOM'); return; }
+
       const c9Cfg = {
         type: 'bar',
         data: {
@@ -4100,7 +4106,8 @@
         }
       };
       window._chartConfigs['c9'] = c9Cfg;
-      new Chart(document.getElementById('c9'), c9Cfg);
+      new Chart(c9el, c9Cfg);
+      }, 50); // end setTimeout
     }
   }
 
