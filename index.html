@@ -3136,15 +3136,42 @@
 
       // Store ALL raw data — filtering will happen after user selection
       // Process format breakdown data
-      const formatData = filterExclude(formatBreakdown).map(row => ({
+      // Process format breakdown data from API
+      let formatData = filterExclude(formatBreakdown).map(row => ({
         campaign_name: row.campaign_name,
         ad_format_asset: row.ad_format_asset || row.media_type || 'Altro',
         spend: parseFloat(row.spend || 0),
         page_engagement: extractAction(row.actions, 'page_engagement'),
         cost_per_page_eng: extractCost(row.cost_per_action_type, 'page_engagement')
       }));
-      console.log('[Dashboard] formatData processed:', formatData.length, 'rows',
-        formatData.length > 0 ? '\n  formats: ' + [...new Set(formatData.map(d => d.ad_format_asset))].join(', ') : '');
+      console.log('[Dashboard] formatData from API:', formatData.length, 'rows',
+        formatData.length > 0 ? '\n  formats: ' + [...new Set(formatData.map(d => d.ad_format_asset))].join(', ') : '(empty)');
+
+      // ── FALLBACK: if API breakdown returned nothing, derive format from adset names ──
+      if (formatData.length === 0 && adsets.length > 0) {
+        console.log('[Dashboard] API breakdown empty → deriving format from adset names');
+        const formatPatterns = [
+          { pattern: /_STORIES/i,                label: 'Stories' },
+          { pattern: /_REEL/i,                   label: 'Reel/Short-form video' },
+          { pattern: /_FEED/i,                   label: 'Feed' },
+        ];
+        formatData = adsets.map(a => {
+          let fmt = 'Altro';
+          for (const fp of formatPatterns) {
+            if (fp.pattern.test(a.adset_name || '')) { fmt = fp.label; break; }
+          }
+          return {
+            campaign_name: a.campaign_name,
+            ad_format_asset: fmt,
+            spend: parseFloat(a.spend || 0),
+            page_engagement: parseInt(a.page_engagement || 0),
+            cost_per_page_eng: parseFloat(a.spend || 0) > 0 && parseInt(a.page_engagement || 0) > 0
+              ? (parseFloat(a.spend) / parseInt(a.page_engagement)).toFixed(4) : null
+          };
+        });
+        console.log('[Dashboard] formatData from adset names:', formatData.length, 'rows',
+          '\n  formats: ' + [...new Set(formatData.map(d => d.ad_format_asset))].join(', '));
+      }
 
       _rawData = { campaigns, adsets, ads, formatData };
       _currentPeriod = { from, to };
