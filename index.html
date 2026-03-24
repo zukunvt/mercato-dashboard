@@ -1195,7 +1195,6 @@
       line-height: 1.5;
     }
     .chart-card canvas { max-height: 240px; width: 100% !important; }
-    #tab-charts #c9 { min-height: 180px; display: block; }
 
     .zoom-btn {
       position: absolute;
@@ -3793,11 +3792,11 @@
         ${_lang==='de' ? 'Effizienz nach Format' : 'Efficienza per formato'}
       </div>
       <div class="chart-grid">
-        <div class="chart-card" style="grid-column: 1 / -1;min-height:280px;">
+        <div class="chart-card" style="grid-column: 1 / -1;">
           ${zoomBtn('c9')}
           <h3>${t('c9_title')}</h3>
           <p class="chart-desc">${t('c9_desc')}</p>
-          <canvas id="c9" style="min-height:180px;max-height:280px;width:100%;display:block;"></canvas>
+          <canvas id="c9" style="max-height:220px"></canvas>
         </div>
       </div>
     `;
@@ -4000,114 +3999,32 @@
     const c4 = sortedFor(asItems, aLabels, asFull, a => a.page_engagement);
     mkPolar('c4', c4.labels, c4.values, PAL5, c4.fullNames, c4.dates);
 
-    // ── c9: Cost per Page Engagement by Media Format (from Meta API breakdown) ──
+    // ── c9: Cost per Page Engagement by Format — using mkHBar like c1-c4 ──
     const rawFormatData = data.formatData || [];
 
-    // Group by ad_format_asset, summing spend and page_engagement
-    const formatMap = {};
+    // Group by ad_format_asset, sum spend and page_engagement
+    const fmtMap = {};
     rawFormatData.forEach(row => {
-      const fmt = row.ad_format_asset || (_lang === 'de' ? 'Unbekannt' : 'Sconosciuto');
-      if (!formatMap[fmt]) {
-        formatMap[fmt] = { spend: 0, page_engagement: 0, count: 0 };
-      }
-      formatMap[fmt].spend += parseFloat(row.spend || 0);
-      formatMap[fmt].page_engagement += parseInt(row.page_engagement || 0);
-      formatMap[fmt].count++;
+      const key = row.ad_format_asset || 'Altro';
+      if (!fmtMap[key]) fmtMap[key] = { spend: 0, page_engagement: 0 };
+      fmtMap[key].spend += parseFloat(row.spend || 0);
+      fmtMap[key].page_engagement += parseInt(row.page_engagement || 0);
     });
 
-    // Compute cost per page engagement for each format, filter out zero-engagement
-    const formatChartData = Object.entries(formatMap)
+    // Build chart data: cost per engagement, filter zeros, sort ascending (cheapest first)
+    const c9Items = Object.entries(fmtMap)
       .filter(([_, v]) => v.page_engagement > 0 && v.spend > 0)
-      .map(([fmt, v]) => ({
-        format: fmt,
-        cost_per_eng: v.spend / v.page_engagement,
-        spend: v.spend,
-        page_engagement: v.page_engagement,
-        count: v.count
-      }))
-      .sort((a, b) => a.cost_per_eng - b.cost_per_eng); // lowest cost = most efficient first
+      .map(([fmt, v]) => ({ fmt, val: parseFloat((v.spend / v.page_engagement).toFixed(4)) }))
+      .sort((a, b) => a.val - b.val);
 
-    // Debug log for troubleshooting
-    console.log('[c9] rawFormatData:', rawFormatData.length, 'rows | formatMap entries:', Object.keys(formatMap).length, '| formatChartData after filter:', formatChartData.length);
-    if (formatChartData.length === 0 && rawFormatData.length > 0) {
-      const c9el = document.getElementById('c9');
-      if (c9el && c9el.parentElement) {
-        c9el.style.display = 'none';
-        const msg = document.createElement('p');
-        msg.style.cssText = 'color:var(--salmone);font-size:0.82rem;padding:20px 0;text-align:center;';
-        msg.textContent = _lang === 'de' ? 'Keine Engagement-Daten für Formatvergleich verfügbar.' : 'Nessun dato di engagement disponibile per il confronto tra formati.';
-        c9el.parentElement.appendChild(msg);
-      }
-    }
-    if (formatChartData.length > 0) {
-      const formatLabels = formatChartData.map(d => d.format);
-      const formatValues = formatChartData.map(d => parseFloat(d.cost_per_eng.toFixed(4)));
-
-      // Use setTimeout to ensure canvas is in DOM with computed dimensions
-      setTimeout(() => {
-      const c9el = document.getElementById('c9');
-      if (!c9el) { console.warn('[c9] canvas not found in DOM'); return; }
-
-      const c9Cfg = {
-        type: 'bar',
-        data: {
-          labels: formatLabels,
-          datasets: [{
-            data: formatValues,
-            backgroundColor: formatChartData.map((d, i) => {
-              // Gradient from green (efficient) to red (expensive)
-              const ratio = formatChartData.length > 1 ? i / (formatChartData.length - 1) : 0;
-              if (ratio <= 0.33) return '#2d8a55cc';
-              if (ratio <= 0.66) return '#ca5c4acc';
-              return '#bb2317cc';
-            }),
-            borderRadius: 6,
-            barThickness: 32
-          }]
-        },
-        options: {
-          ...commonOpts,
-          maintainAspectRatio: false,
-          indexAxis: 'y',
-          scales: {
-            x: {
-              ticks: { font: { size: 11 }, callback: v => '€ ' + v.toFixed(3) },
-              grid: { color: '#f7e3e2' },
-              border: { display: false },
-              title: { display: true, text: _lang === 'de' ? 'Kosten pro Seitenengagement (€)' : 'Costo per Eng. Pagina (€)', font: { size: 11 }, color: '#dd9388' }
-            },
-            y: {
-              ticks: { font: { size: 13, weight: '600' }, color: '#210d09' },
-              grid: { display: false },
-              border: { display: false }
-            }
-          },
-          plugins: {
-            ...commonOpts.plugins,
-            tooltip: {
-              callbacks: {
-                title: ctx => {
-                  const i = ctx[0].dataIndex;
-                  const d = formatChartData[i];
-                  return d.format;
-                },
-                label: ctx => {
-                  const i = ctx.dataIndex;
-                  const d = formatChartData[i];
-                  return [
-                    ' ' + (_lang === 'de' ? 'Kosten/Eng.' : 'Costo/Eng.') + ': € ' + d.cost_per_eng.toFixed(4).replace('.', ','),
-                    ' ' + (_lang === 'de' ? 'Ausgaben' : 'Spesa') + ': € ' + d.spend.toFixed(2).replace('.', ','),
-                    ' ' + (_lang === 'de' ? 'Engagement' : 'Engagement') + ': ' + d.page_engagement.toLocaleString('it-IT')
-                  ];
-                }
-              }
-            }
-          }
-        }
-      };
-      window._chartConfigs['c9'] = c9Cfg;
-      new Chart(c9el, c9Cfg);
-      }, 50); // end setTimeout
+    if (c9Items.length > 0) {
+      const c9Labels = c9Items.map(d => d.fmt);
+      const c9Values = c9Items.map(d => d.val);
+      const c9Colors = c9Items.map((_, i) => {
+        const r = c9Items.length > 1 ? i / (c9Items.length - 1) : 0;
+        return r <= 0.33 ? '#2d8a55cc' : r <= 0.66 ? '#ca5c4acc' : '#bb2317cc';
+      });
+      mkHBar('c9', c9Labels, c9Values, c9Colors, '');
     }
   }
 
