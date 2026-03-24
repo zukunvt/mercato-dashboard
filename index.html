@@ -3796,7 +3796,7 @@
           ${zoomBtn('c9')}
           <h3>${t('c9_title')}</h3>
           <p class="chart-desc">${t('c9_desc')}</p>
-          <canvas id="c9" style="max-height:280px"></canvas>
+          <canvas id="c9" style="height:220px;width:100%;"></canvas>
         </div>
       </div>
     `;
@@ -4026,6 +4026,18 @@
       }))
       .sort((a, b) => a.cost_per_eng - b.cost_per_eng); // lowest cost = most efficient first
 
+    // Debug log for troubleshooting
+    console.log('[c9] rawFormatData:', rawFormatData.length, 'rows | formatMap entries:', Object.keys(formatMap).length, '| formatChartData after filter:', formatChartData.length);
+    if (formatChartData.length === 0 && rawFormatData.length > 0) {
+      const c9el = document.getElementById('c9');
+      if (c9el && c9el.parentElement) {
+        c9el.style.display = 'none';
+        const msg = document.createElement('p');
+        msg.style.cssText = 'color:var(--salmone);font-size:0.82rem;padding:20px 0;text-align:center;';
+        msg.textContent = _lang === 'de' ? 'Keine Engagement-Daten für Formatvergleich verfügbar.' : 'Nessun dato di engagement disponibile per il confronto tra formati.';
+        c9el.parentElement.appendChild(msg);
+      }
+    }
     if (formatChartData.length > 0) {
       const formatLabels = formatChartData.map(d => d.format);
       const formatValues = formatChartData.map(d => parseFloat(d.cost_per_eng.toFixed(4)));
@@ -4049,6 +4061,7 @@
         },
         options: {
           ...commonOpts,
+          maintainAspectRatio: false,
           indexAxis: 'y',
           scales: {
             x: {
@@ -4393,4 +4406,10 @@
     <p data-i18n="save_modal_desc">Scegli un nome per riconoscere facilmente questo snapshot in archivio.</p>
     <input type="text" id="save-name-input" data-i18n-placeholder="save_modal_placeholder" placeholder="es. Febbraio 2026 — Campagne Engagement" />
     <div class="save-name-btns">
-      <button class="btn-back" onclick="closeSaveModal()" data-i18n="cancel_btn">Annulla</
+      <button class="btn-back" onclick="closeSaveModal()" data-i18n="cancel_btn">Annulla</button>
+      <button class="btn-primary" onclick="confirmSave()" data-i18n="save_confirm_btn">Salva</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
