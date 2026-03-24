@@ -886,103 +886,6 @@
       margin-left: 2px;
     }
 
-    /* ── Ad creative image — side-by-side layout inside adset cards ── */
-    .adset-card-body {
-      display: flex;
-      flex-direction: column;
-    }
-    .adset-card-body.has-img {
-      display: grid;
-      grid-template-columns: 140px 1fr;
-      gap: 0;
-      align-items: start;
-    }
-    .adset-thumb-side {
-      width: 140px;
-      border-radius: 8px;
-      overflow: hidden;
-      cursor: pointer;
-      position: relative;
-      background: var(--rosa-1);
-      border: 1px solid rgba(33,13,9,0.06);
-      align-self: start;
-      margin-top: 2px;
-      transition: box-shadow 0.2s;
-      /* Force crisp rendering even if source is slightly smaller */
-      image-rendering: -webkit-optimize-contrast;
-      image-rendering: crisp-edges;
-    }
-    .adset-thumb-side:hover {
-      box-shadow: 0 3px 14px rgba(33,13,9,0.15);
-    }
-    .adset-thumb-side::after {
-      content: '🔍';
-      position: absolute;
-      bottom: 5px;
-      right: 5px;
-      font-size: 0.6rem;
-      background: rgba(255,255,255,0.88);
-      border-radius: 5px;
-      padding: 2px 5px;
-      line-height: 1;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-    .adset-thumb-side:hover::after {
-      opacity: 1;
-    }
-    .adset-thumb-side img {
-      display: block;
-      width: 100%;
-      height: auto;
-      object-fit: cover;
-      image-rendering: -webkit-optimize-contrast;
-      image-rendering: high-quality;
-    }
-    .adset-metrics-col {
-      min-width: 0;
-    }
-    /* On narrow cards / mobile, stack vertically */
-    @media (max-width: 420px) {
-      .adset-card-body.has-img {
-        grid-template-columns: 1fr;
-      }
-      .adset-thumb-side {
-        width: 100%;
-        max-height: 200px;
-      }
-      .adset-thumb-side img {
-        max-height: 200px;
-      }
-    }
-
-    /* Fullscreen lightbox for ad images */
-    .thumb-lightbox {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      background: rgba(33,13,9,0.85);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: zoom-out;
-      animation: lbFadeIn 0.2s ease;
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .thumb-lightbox img {
-      max-width: 90vw;
-      max-height: 90vh;
-      border-radius: 10px;
-      box-shadow: 0 12px 48px rgba(0,0,0,0.4);
-      object-fit: contain;
-    }
-    @keyframes lbFadeIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
-
     .metrics-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -2493,10 +2396,8 @@
       c7_desc: 'Quale annuncio ha convinto di più le persone a cliccare. Confronto diretto tra creativi.',
       c8_title: 'Efficienza: CPM vs CPC',
       c8_desc: 'Costo per 1000 impression (CPM) vs costo per click (CPC). Aiuta a capire dove si ottiene più valore per euro speso.',
-      c9_title: 'Costo/Eng. Pagina per piattaforma',
-      c9_desc: 'Confronto del costo medio per engagement di pagina tra le piattaforme (Instagram, Facebook). Più basso è il costo, più la piattaforma è efficiente nel generare interazioni.',
-      c10_title: 'Efficienza per posizionamento',
-      c10_desc: 'Confronto dell\'efficienza tra i diversi posizionamenti (Feed, Reel, Stories, Explore, ecc.). Mostra il costo per engagement o il CPM a seconda dei dati disponibili.',
+      c9_title: 'Costo/Eng. Pagina per formato',
+      c9_desc: 'Confronto del costo medio per engagement di pagina tra i diversi formati pubblicitari (Feed, Reel, Stories, ecc.). Più basso è il costo, più il formato è efficiente nel generare interazioni.',
       interactions_tooltip: 'interazioni',
       // Glossario
       tab_glossary: 'Glossario',
@@ -2671,10 +2572,8 @@
       c7_desc: 'Welche Anzeige hat mehr Personen zum Klicken bewegt. Direkter Vergleich zwischen Creatives.',
       c8_title: 'Effizienz: CPM vs. CPC',
       c8_desc: 'Kosten pro 1000 Impressionen (CPM) vs. Kosten pro Klick (CPC). Zeigt, wo man den besten Wert pro ausgegebenem Euro erzielt.',
-      c9_title: 'Kosten/Seiteneng. nach Plattform',
-      c9_desc: 'Vergleich der durchschnittlichen Kosten pro Seitenengagement zwischen den Plattformen (Instagram, Facebook). Je niedriger die Kosten, desto effizienter ist die Plattform bei der Generierung von Interaktionen.',
-      c10_title: 'Effizienz nach Platzierung',
-      c10_desc: 'Vergleich der Effizienz zwischen den verschiedenen Platzierungen (Feed, Reel, Stories, Explore, usw.). Zeigt Kosten pro Engagement oder CPM je nach verfügbaren Daten.',
+      c9_title: 'Kosten/Seiteneng. nach Format',
+      c9_desc: 'Vergleich der durchschnittlichen Kosten pro Seitenengagement zwischen den verschiedenen Werbeformaten (Feed, Reel, Stories, usw.). Je niedriger die Kosten, desto effizienter ist das Format bei der Generierung von Interaktionen.',
       interactions_tooltip: 'Interaktionen',
       // Glossario
       tab_glossary: 'Glossar',
@@ -2925,18 +2824,6 @@
     document.getElementById('home-error').style.display = 'none';
   }
 
-  // ── AD IMAGE LIGHTBOX ─────────────────────────────────────────
-  function openThumbLightbox(imgSrc, altText) {
-    const lb = document.createElement('div');
-    lb.className = 'thumb-lightbox';
-    lb.onclick = () => lb.remove();
-    lb.innerHTML = `<img src="${imgSrc}" alt="${(altText||'').replace(/"/g,'&quot;')}" />`;
-    document.body.appendChild(lb);
-    // Close on Escape
-    const closeOnEsc = (e) => { if (e.key === 'Escape') { lb.remove(); document.removeEventListener('keydown', closeOnEsc); } };
-    document.addEventListener('keydown', closeOnEsc);
-  }
-
   // ── FORMAT HELPERS ───────────────────────────────────────────
   function fmt(val, d = 2) {
     if (val === null || val === undefined) return '—';
@@ -3069,8 +2956,7 @@
       page_engagement: String(eng), post_engagement: String(Math.round(eng*0.9)),
       video_3s: String(Math.round(imp*0.08)), cost_per_page_eng: String((spend/eng).toFixed(3)),
       cost_per_post_eng: String((spend/(eng*0.9)).toFixed(3)),
-      status, start_time: start, end_time: end,
-      thumbnail_url: null
+      status, start_time: start, end_time: end
     });
     const EC = 'Engagement (2026 - zukunvt)';
     const TC = 'Traffic, Job Offers (2026 - zukunvt)';
@@ -3095,18 +2981,12 @@
       ],
       ads: [],
       formatData: [
-        { campaign_name: EC, ad_format_asset: 'instagram', spend: 280.50, page_engagement: 72000, cost_per_page_eng: '0.004' },
-        { campaign_name: EC, ad_format_asset: 'facebook', spend: 178.39, page_engagement: 24425, cost_per_page_eng: '0.007' },
-        { campaign_name: TC, ad_format_asset: 'instagram', spend: 88.60, page_engagement: 7340, cost_per_page_eng: '0.012' },
-        { campaign_name: TC, ad_format_asset: 'facebook', spend: 67.70, page_engagement: 4500, cost_per_page_eng: '0.015' },
-      ],
-      placementData: [
-        { campaign_name: EC, placement: 'Feed', spend: 218.39, page_engagement: 46289, cost_per_page_eng: '0.005' },
-        { campaign_name: EC, placement: 'Reel/Short-form video', spend: 240.50, page_engagement: 50136, cost_per_page_eng: '0.005' },
-        { campaign_name: EC, placement: 'Stories', spend: 0, page_engagement: 0, cost_per_page_eng: null },
-        { campaign_name: TC, placement: 'Feed', spend: 107.70, page_engagement: 8040, cost_per_page_eng: '0.013' },
-        { campaign_name: TC, placement: 'Stories', spend: 48.60, page_engagement: 3800, cost_per_page_eng: '0.013' },
-        { campaign_name: TC, placement: 'Reel/Short-form video', spend: 0, page_engagement: 500, cost_per_page_eng: null },
+        { campaign_name: EC, ad_format_asset: 'Feed', spend: 218.39, page_engagement: 46289, cost_per_page_eng: '0.005' },
+        { campaign_name: EC, ad_format_asset: 'Reel/Short-form video', spend: 240.50, page_engagement: 50136, cost_per_page_eng: '0.005' },
+        { campaign_name: EC, ad_format_asset: 'Stories', spend: 0, page_engagement: 0, cost_per_page_eng: null },
+        { campaign_name: TC, ad_format_asset: 'Feed', spend: 107.70, page_engagement: 8040, cost_per_page_eng: '0.013' },
+        { campaign_name: TC, ad_format_asset: 'Stories', spend: 48.60, page_engagement: 3800, cost_per_page_eng: '0.013' },
+        { campaign_name: TC, ad_format_asset: 'Reel/Short-form video', spend: 0, page_engagement: 500, cost_per_page_eng: null },
       ]
     };
   }
@@ -3158,96 +3038,16 @@
       await delay(150);
       const adsetMeta     = await fetchAllPages(`act_${AD_ACCOUNT_ID}/adsets`,   { fields: 'name,status,start_time,end_time', limit: 200 });
       await delay(150);
-      const adMeta        = await fetchAllPages(`act_${AD_ACCOUNT_ID}/ads`,      { fields: 'name,status,created_time,updated_time,adset_id,creative{effective_object_story_id,thumbnail_url}', limit: 200 });
+      const adMeta        = await fetchAllPages(`act_${AD_ACCOUNT_ID}/ads`,      { fields: 'name,status,created_time,updated_time', limit: 200 });
       await delay(150);
 
-      // Resolve full-res images from original posts via effective_object_story_id
-      // Use attachments{media} which returns the source image at original resolution
-      const storyIdToAdNames = {};
-      adMeta.forEach(a => {
-        const storyId = a.creative && a.creative.effective_object_story_id;
-        if (storyId) {
-          if (!storyIdToAdNames[storyId]) storyIdToAdNames[storyId] = [];
-          storyIdToAdNames[storyId].push(a.name);
-        }
-      });
-      const storyIds = Object.keys(storyIdToAdNames);
-      const storyImageMap = {}; // storyId → high-res image URL
-      const BATCH_SIZE = 15;
-      for (let i = 0; i < storyIds.length; i += BATCH_SIZE) {
-        const batch = storyIds.slice(i, i + BATCH_SIZE);
-        const fetches = batch.map(sid =>
-          metaGet(sid, { fields: 'full_picture,attachments{media,subattachments}' })
-            .then(r => {
-              // Priority: attachments.media.image.src (original full-res) → full_picture (fallback)
-              let bestUrl = null;
-              try {
-                const att = r.attachments && r.attachments.data && r.attachments.data[0];
-                if (att && att.media && att.media.image && att.media.image.src) {
-                  bestUrl = att.media.image.src;
-                }
-                // Also check subattachments for carousel ads
-                if (!bestUrl && att && att.subattachments && att.subattachments.data) {
-                  const sub = att.subattachments.data[0];
-                  if (sub && sub.media && sub.media.image && sub.media.image.src) {
-                    bestUrl = sub.media.image.src;
-                  }
-                }
-              } catch(e) {}
-              // Fallback to full_picture — try to force higher resolution via URL manipulation
-              if (!bestUrl && r && r.full_picture) {
-                bestUrl = r.full_picture;
-                // Facebook CDN URLs often contain size params like /p960x960/ or /s720x720/
-                // Try to request larger version
-                try {
-                  const u = new URL(bestUrl);
-                  if (!u.searchParams.has('_nc_cat')) {
-                    // External redirect URL — append size hint
-                  }
-                } catch(e) {}
-              }
-              if (bestUrl) storyImageMap[sid] = bestUrl;
-            })
-            .catch(() => {}) // silently skip if post not accessible
-        );
-        await Promise.all(fetches);
-        if (i + BATCH_SIZE < storyIds.length) await delay(200);
-      }
-      console.log('%c[Dashboard] Full-res post images fetched:', 'color:#2e7d32;font-weight:bold',
-        storyIds.length, 'stories →', Object.keys(storyImageMap).length, 'images resolved',
-        '\n  sample URL:', Object.values(storyImageMap)[0] || '(none)');
-
       // Fetch insights broken down by ad_format_asset to get media type data
-      let formatBreakdown = [];
-      try {
-        formatBreakdown = await fetchAllPages(`act_${AD_ACCOUNT_ID}/insights`, {
-          ...insightsParams,
-          level: 'campaign',
-          fields: 'campaign_name,spend,actions,cost_per_action_type',
-          breakdowns: 'ad_format_asset'
-        });
-      } catch(e) {
-        console.log('%c[Dashboard] ad_format_asset breakdown failed:', 'color:#e65100', e.message);
-      }
-      // If ad_format_asset returned no data, try publisher_platform as fallback
-      if (!formatBreakdown || formatBreakdown.length === 0) {
-        console.log('%c[Dashboard] ad_format_asset returned empty, trying publisher_platform…', 'color:#e65100;font-weight:bold');
-        try {
-          formatBreakdown = await fetchAllPages(`act_${AD_ACCOUNT_ID}/insights`, {
-            ...insightsParams,
-            level: 'campaign',
-            fields: 'campaign_name,spend,actions,cost_per_action_type',
-            breakdowns: 'publisher_platform'
-          });
-        } catch(e) {
-          console.log('%c[Dashboard] publisher_platform breakdown also failed:', 'color:#e65100', e.message);
-          formatBreakdown = [];
-        }
-      }
-      console.log('%c[Dashboard] Format breakdown raw data:', 'color:#2e7d32;font-weight:bold',
-        formatBreakdown.length, 'rows',
-        formatBreakdown.length > 0 ? '\n  first row keys: ' + Object.keys(formatBreakdown[0]).join(', ') : '',
-        formatBreakdown.length > 0 ? '\n  sample: ' + JSON.stringify(formatBreakdown[0]).substring(0, 200) : '');
+      const formatBreakdown = await fetchAllPages(`act_${AD_ACCOUNT_ID}/insights`, {
+        ...insightsParams,
+        level: 'campaign',
+        fields: 'campaign_name,spend,actions,cost_per_action_type',
+        breakdowns: 'ad_format_asset'
+      });
 
       const budgetMap = {};
       budgetData.forEach(c => {
@@ -3270,32 +3070,14 @@
         };
       });
 
-      // Map ad name → metadata with full-res image from post
+      // Map ad name → metadata
       const adMetaMap = {};
       adMeta.forEach(a => {
-        const c = a.creative || {};
-        const storyId = c.effective_object_story_id || null;
-        const fullImg = storyId ? (storyImageMap[storyId] || null) : null;
         adMetaMap[a.name] = {
           status:       a.status       || null,
-          created_time: a.created_time || null,
-          full_image_url: fullImg || c.thumbnail_url || null
+          created_time: a.created_time || null
         };
       });
-
-      // Build adset_name → full-res image map from ad-level creative data
-      const adsetThumbnailMap = {};
-      adInsights.forEach(row => {
-        const adsetName = row.adset_name;
-        if (!adsetName) return;
-        const meta = adMetaMap[row.ad_name];
-        if (meta && meta.full_image_url && !adsetThumbnailMap[adsetName]) {
-          adsetThumbnailMap[adsetName] = meta.full_image_url;
-        }
-      });
-      console.log('%c[Dashboard] Adset image mappings:', 'color:#2e7d32;font-weight:bold',
-        Object.keys(adsetThumbnailMap).length, 'adsets with images',
-        '\n  sample URL:', Object.values(adsetThumbnailMap)[0] || '(none)');
 
       const filterExclude = arr => arr.filter(r => !(r.campaign_name || '').toUpperCase().includes(EXCLUDE_KW));
 
@@ -3336,8 +3118,7 @@
 
       const adsets = filterExclude(adsetInsights).map(row => {
         const m = adsetMetaMap[row.adset_name] || {};
-        const thumb = adsetThumbnailMap[row.adset_name] || null;
-        return { ...processRow(row), ...m, thumbnail_url: thumb };
+        return { ...processRow(row), ...m };
       });
 
       const ads = filterExclude(adInsights).map(row => {
@@ -3345,56 +3126,17 @@
         return { ...processRow(row), ...m };
       });
 
-      // Process format breakdown data (publisher_platform — for "per piattaforma" chart)
+      // Store ALL raw data — filtering will happen after user selection
+      // Process format breakdown data
       const formatData = filterExclude(formatBreakdown).map(row => ({
         campaign_name: row.campaign_name,
-        ad_format_asset: row.ad_format_asset || row.media_type || row.publisher_platform || 'unknown',
+        ad_format_asset: row.ad_format_asset || 'unknown',
         spend: parseFloat(row.spend || 0),
         page_engagement: extractAction(row.actions, 'page_engagement'),
         cost_per_page_eng: extractCost(row.cost_per_action_type, 'page_engagement')
       }));
-      console.log('%c[Dashboard] platformData processed:', 'color:#2e7d32;font-weight:bold',
-        formatData.length, 'rows',
-        formatData.length > 0 ? '\n  platforms found: ' + [...new Set(formatData.map(d => d.ad_format_asset))].join(', ') : '(none)');
 
-      // Fetch placement breakdown (Feed, Story, Reels, etc.)
-      // platform_position with actions can be invalid — use spend/impressions only
-      let placementBreakdown = [];
-      // Try platform_position first (feed, story, reels, explore, etc.)
-      try {
-        placementBreakdown = await fetchAllPages(`act_${AD_ACCOUNT_ID}/insights`, {
-          ...insightsParams,
-          level: 'campaign',
-          fields: 'campaign_name,spend,impressions,actions,cost_per_action_type',
-          breakdowns: 'platform_position'
-        });
-      } catch(e) {
-        console.log('%c[Dashboard] platform_position with actions failed, retrying without actions…', 'color:#e65100', e.message);
-        try {
-          placementBreakdown = await fetchAllPages(`act_${AD_ACCOUNT_ID}/insights`, {
-            ...insightsParams,
-            level: 'campaign',
-            fields: 'campaign_name,spend,impressions',
-            breakdowns: 'platform_position'
-          });
-        } catch(e2) {
-          console.log('%c[Dashboard] platform_position breakdown fully failed:', 'color:#e65100', e2.message);
-        }
-      }
-      const placementData = filterExclude(placementBreakdown).map(row => ({
-        campaign_name: row.campaign_name,
-        placement: row.platform_position || 'unknown',
-        spend: parseFloat(row.spend || 0),
-        impressions: parseInt(row.impressions || 0),
-        page_engagement: row.actions ? extractAction(row.actions, 'page_engagement') : 0,
-        cost_per_page_eng: row.cost_per_action_type ? extractCost(row.cost_per_action_type, 'page_engagement') : null
-      }));
-      console.log('%c[Dashboard] placementData processed:', 'color:#2e7d32;font-weight:bold',
-        placementData.length, 'rows',
-        placementData.length > 0 ? '\n  placements found: ' + [...new Set(placementData.map(d => d.placement))].join(', ') : '(none)',
-        '\n  rows with spend > 0:', placementData.filter(d => d.spend > 0).length);
-
-      _rawData = { campaigns, adsets, ads, formatData, placementData };
+      _rawData = { campaigns, adsets, ads, formatData };
       _currentPeriod = { from, to };
 
       // Fetch real follower counts (FB + IG) — updates UI when ready
@@ -3519,8 +3261,7 @@
       campaigns: _rawData.campaigns.filter(c => sel.has(c.campaign_name)),
       adsets:    _rawData.adsets.filter(c => sel.has(c.campaign_name)),
       ads:       (_rawData.ads || []).filter(c => sel.has(c.campaign_name)),
-      formatData: (_rawData.formatData || []).filter(c => sel.has(c.campaign_name)),
-      placementData: (_rawData.placementData || []).filter(c => sel.has(c.campaign_name))
+      formatData: (_rawData.formatData || []).filter(c => sel.has(c.campaign_name))
     };
 
     renderResults(_currentPeriod, filtered);
@@ -3592,13 +3333,10 @@
             start_time: a.start_time, end_time: a.end_time,
             spend: 0, reach: 0, impressions: 0, link_clicks: 0,
             page_engagement: 0, post_engagement: 0, video_3s: 0,
-            thumbnail_url: a.thumbnail_url || null,
           };
         }
         const g = map[label];
         g._count++;
-        // Keep the first available thumbnail
-        if (!g.thumbnail_url && a.thumbnail_url) g.thumbnail_url = a.thumbnail_url;
         // Status: if any is ACTIVE, group is ACTIVE
         if ((a.status||'').toUpperCase() === 'ACTIVE') g.status = 'ACTIVE';
         // Date range: min start → max end
@@ -3631,19 +3369,11 @@
       const adsetPeriod = (a.start_time || a.end_time)
         ? fmtDate(a.start_time) + ' → ' + (a.end_time ? fmtDate(a.end_time) : t('ongoing'))
         : null;
-      const safeAlt = (a._label || a.adset_name || '').replace(/"/g, '&quot;').replace(/'/g, "\\'");
-      const hasImg = !!a.thumbnail_url;
-      const thumbHTML = hasImg
-        ? `<div class="adset-thumb-side" onclick="openThumbLightbox('${a.thumbnail_url}', '${safeAlt}')">
-            <img src="${a.thumbnail_url}" alt="${safeAlt}" 
-              onerror="this.closest('.adset-card-body').classList.remove('has-img');this.parentElement.remove();" loading="lazy" />
-           </div>`
-        : '';
 
       // Build metrics based on objective type
       let metricsHTML = '';
       if (isE) {
-        // Engagement: only spesa, copertura, impression, click, eng.post (red), costo/eng.post (red)
+        // Engagement: spesa, copertura, impression, click, eng.post (red), costo/eng.post (red)
         metricsHTML = `
               ${mRow(t('spend'), '€ ' + fmt(a.spend))}
               ${mRow(t('reach'), fmtInt(a.reach))}
@@ -3652,7 +3382,7 @@
               ${mRow(t('eng_post'), fmtInt(a.post_engagement), 'hl-e')}
               ${mRow(t('cost_eng_post'), a.cost_per_post_eng > 0 ? '€ ' + fmt(a.cost_per_post_eng, 3) : '—', 'hl-e')}`;
       } else if (isT) {
-        // Traffic: only spesa, copertura, impression, click, CPC (highlighted), CTR (highlighted)
+        // Traffic: spesa, copertura, impression, click, CPC (highlighted), CTR (highlighted)
         metricsHTML = `
               ${mRow(t('spend'), '€ ' + fmt(a.spend))}
               ${mRow(t('reach'), fmtInt(a.reach))}
@@ -3680,18 +3410,14 @@
       return `<div class="data-card">
         <div class="data-card-header">
           <span class="data-card-title">${a._label || a.adset_name}</span>
+          ${statusBadge(a.status)}
         </div>
         <div class="data-card-meta">
           ${a.campaign_name}
           ${adsetPeriod ? `<span class="card-period-badge">📅 ${adsetPeriod}</span>` : ''}
         </div>
-        <div class="adset-card-body ${hasImg ? 'has-img' : ''}">
-          ${thumbHTML}
-          <div class="adset-metrics-col">
-            <div class="metrics-grid">
-              ${metricsHTML}
-            </div>
-          </div>
+        <div class="metrics-grid">
+          ${metricsHTML}
         </div>
       </div>`;
     };
@@ -4054,20 +3780,14 @@
 
       <div class="charts-section-title" style="margin-top:28px">
         <span class="cs-dot e"></span>
-        ${_lang==='de' ? 'Effizienz nach Plattform & Format' : 'Efficienza per piattaforma e formato'}
+        ${_lang==='de' ? 'Effizienz nach Format' : 'Efficienza per formato'}
       </div>
       <div class="chart-grid">
         <div class="chart-card" style="grid-column: 1 / -1;">
           ${zoomBtn('c9')}
           <h3>${t('c9_title')}</h3>
           <p class="chart-desc">${t('c9_desc')}</p>
-          <canvas id="c9" style="min-height:120px;max-height:220px"></canvas>
-        </div>
-        <div class="chart-card" style="grid-column: 1 / -1;">
-          ${zoomBtn('c10')}
-          <h3>${t('c10_title')}</h3>
-          <p class="chart-desc">${t('c10_desc')}</p>
-          <canvas id="c10" style="min-height:140px;max-height:360px"></canvas>
+          <canvas id="c9" style="max-height:280px"></canvas>
         </div>
       </div>
     `;
@@ -4308,18 +4028,18 @@
           datasets: [{
             data: formatValues,
             backgroundColor: formatChartData.map((d, i) => {
+              // Gradient from green (efficient) to red (expensive)
               const ratio = formatChartData.length > 1 ? i / (formatChartData.length - 1) : 0;
               if (ratio <= 0.33) return '#2d8a55cc';
               if (ratio <= 0.66) return '#ca5c4acc';
               return '#bb2317cc';
             }),
             borderRadius: 6,
-            barThickness: 36
+            barThickness: 32
           }]
         },
         options: {
           ...commonOpts,
-          maintainAspectRatio: false,
           indexAxis: 'y',
           scales: {
             x: {
@@ -4359,123 +4079,6 @@
       };
       window._chartConfigs['c9'] = c9Cfg;
       new Chart(document.getElementById('c9'), c9Cfg);
-    }
-
-    // ── c10: Cost per Page Engagement by Placement/Format (Feed, Reel, Stories etc.) ──
-    const rawPlacementData = data.placementData || [];
-    const placementMap = {};
-    rawPlacementData.forEach(row => {
-      const fmt = row.placement || (_lang === 'de' ? 'Unbekannt' : 'Sconosciuto');
-      if (!placementMap[fmt]) {
-        placementMap[fmt] = { spend: 0, page_engagement: 0, impressions: 0, count: 0 };
-      }
-      placementMap[fmt].spend += parseFloat(row.spend || 0);
-      placementMap[fmt].page_engagement += parseInt(row.page_engagement || 0);
-      placementMap[fmt].impressions += parseInt(row.impressions || 0);
-      placementMap[fmt].count++;
-    });
-
-    // Check if we have engagement data — if yes, show cost/eng; if not, show CPM (spend per 1k impressions)
-    const hasEngData = Object.values(placementMap).some(v => v.page_engagement > 0);
-
-    let placementChartData;
-    let c10MetricLabel, c10AxisLabel, c10TooltipFmt;
-
-    if (hasEngData) {
-      // Cost per page engagement
-      placementChartData = Object.entries(placementMap)
-        .filter(([_, v]) => v.page_engagement > 0 && v.spend > 0)
-        .map(([fmt, v]) => ({
-          format: fmt,
-          metric_value: v.spend / v.page_engagement,
-          spend: v.spend,
-          page_engagement: v.page_engagement,
-          impressions: v.impressions
-        }))
-        .sort((a, b) => a.metric_value - b.metric_value);
-      c10MetricLabel = _lang === 'de' ? 'Kosten/Eng.' : 'Costo/Eng.';
-      c10AxisLabel = _lang === 'de' ? 'Kosten pro Seitenengagement (€)' : 'Costo per Eng. Pagina (€)';
-      c10TooltipFmt = d => '€ ' + d.metric_value.toFixed(4).replace('.', ',');
-    } else {
-      // Fallback: CPM (cost per 1k impressions) by placement
-      placementChartData = Object.entries(placementMap)
-        .filter(([_, v]) => v.impressions > 0 && v.spend > 0)
-        .map(([fmt, v]) => ({
-          format: fmt,
-          metric_value: v.spend / v.impressions * 1000,
-          spend: v.spend,
-          page_engagement: v.page_engagement,
-          impressions: v.impressions
-        }))
-        .sort((a, b) => a.metric_value - b.metric_value);
-      c10MetricLabel = 'CPM';
-      c10AxisLabel = _lang === 'de' ? 'CPM — Kosten pro 1.000 Impressionen (€)' : 'CPM — Costo per 1.000 impression (€)';
-      c10TooltipFmt = d => '€ ' + d.metric_value.toFixed(2).replace('.', ',');
-    }
-
-    if (placementChartData.length > 0) {
-      const plLabels = placementChartData.map(d => d.format);
-      const plValues = placementChartData.map(d => parseFloat(d.metric_value.toFixed(4)));
-
-      const c10Cfg = {
-        type: 'bar',
-        data: {
-          labels: plLabels,
-          datasets: [{
-            data: plValues,
-            backgroundColor: placementChartData.map((d, i) => {
-              const ratio = placementChartData.length > 1 ? i / (placementChartData.length - 1) : 0;
-              if (ratio <= 0.33) return '#2d8a55cc';
-              if (ratio <= 0.66) return '#ca5c4acc';
-              return '#bb2317cc';
-            }),
-            borderRadius: 6,
-            barThickness: 36
-          }]
-        },
-        options: {
-          ...commonOpts,
-          maintainAspectRatio: false,
-          indexAxis: 'y',
-          scales: {
-            x: {
-              ticks: { font: { size: 11 }, callback: v => '€ ' + v.toFixed(3) },
-              grid: { color: '#f7e3e2' },
-              border: { display: false },
-              title: { display: true, text: c10AxisLabel, font: { size: 11 }, color: '#dd9388' }
-            },
-            y: {
-              ticks: { font: { size: 13, weight: '600' }, color: '#210d09' },
-              grid: { display: false },
-              border: { display: false }
-            }
-          },
-          plugins: {
-            ...commonOpts.plugins,
-            tooltip: {
-              callbacks: {
-                title: ctx => {
-                  const i = ctx[0].dataIndex;
-                  return placementChartData[i].format;
-                },
-                label: ctx => {
-                  const i = ctx.dataIndex;
-                  const d = placementChartData[i];
-                  const lines = [
-                    ' ' + c10MetricLabel + ': ' + c10TooltipFmt(d),
-                    ' ' + (_lang === 'de' ? 'Ausgaben' : 'Spesa') + ': € ' + d.spend.toFixed(2).replace('.', ','),
-                  ];
-                  if (d.impressions > 0) lines.push(' Impression: ' + d.impressions.toLocaleString('it-IT'));
-                  if (d.page_engagement > 0) lines.push(' Engagement: ' + d.page_engagement.toLocaleString('it-IT'));
-                  return lines;
-                }
-              }
-            }
-          }
-        }
-      };
-      window._chartConfigs['c10'] = c10Cfg;
-      new Chart(document.getElementById('c10'), c10Cfg);
     }
   }
 
