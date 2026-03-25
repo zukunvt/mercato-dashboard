@@ -4031,6 +4031,20 @@
       }))
       .sort((a, b) => a.cost_per_eng - b.cost_per_eng); // lowest cost = most efficient first
 
+    // ── TEMP DEBUG PANEL for c9 ──
+    const c9debugEl = document.getElementById('c9')?.closest('.chart-card');
+    if (c9debugEl) {
+      const dbg = document.createElement('div');
+      dbg.style.cssText = 'background:#f7e3e2;border:1px solid #ca5c4a;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.78rem;color:#210d09;font-family:monospace;white-space:pre-wrap;word-break:break-all;';
+      dbg.innerHTML = '<strong>DEBUG c9</strong>\n' +
+        'formatData rows: ' + rawFormatData.length + '\n' +
+        'fmtMap keys: ' + Object.keys(formatMap).join(', ') + '\n' +
+        'chartData items: ' + formatChartData.length + '\n' +
+        (formatChartData.length > 0 ? 'Items: ' + formatChartData.map(x => x.format + '=€' + x.cost_per_eng.toFixed(4)).join(' | ') : 'VUOTO') +
+        '\n\nRaw rows (first 5):\n' + rawFormatData.slice(0,5).map(r => JSON.stringify({fmt: r.ad_format_asset, camp: (r.campaign_name||'').substring(0,30), spend: r.spend, eng: r.page_engagement})).join('\n');
+      c9debugEl.insertBefore(dbg, document.getElementById('c9'));
+    }
+
     if (formatChartData.length > 0) {
       const formatLabels = formatChartData.map(d => d.format);
       const formatValues = formatChartData.map(d => parseFloat(d.cost_per_eng.toFixed(4)));
