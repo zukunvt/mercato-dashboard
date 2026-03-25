@@ -528,19 +528,21 @@
     .header-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
     .header-hamburger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
     .header-zk-link {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       text-decoration: none;
       padding: 5px 10px;
       border-radius: 6px;
       opacity: 0.85;
       transition: all 0.15s;
+      flex-shrink: 0;
     }
     .header-zk-link:hover { opacity: 1; background: rgba(255,255,255,0.1); }
     .header-zk-wordmark {
-      height: 16px;
-      width: auto;
+      height: 22px;
+      width: 95px;
       object-fit: contain;
+      flex-shrink: 0;
     }
     .header-help-btn {
       font-family: 'DM Sans', sans-serif;
@@ -548,11 +550,17 @@
       font-weight: 500;
       color: rgba(255,255,255,0.72);
       text-decoration: none;
-      padding: 5px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
       border: 1px solid rgba(255,255,255,0.22);
       border-radius: 20px;
       transition: all 0.15s;
       white-space: nowrap;
+      line-height: 1;
+      cursor: pointer;
+      background: none;
     }
     .header-help-btn:hover { color: #fff; border-color: rgba(255,255,255,0.55); }
     #header-right {
@@ -1648,19 +1656,21 @@
       filter: brightness(0) invert(1);
     }
     .header-zk-link {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       text-decoration: none;
       opacity: 0.85;
       transition: opacity 0.15s;
       padding: 4px 8px;
       border-radius: 6px;
+      flex-shrink: 0;
     }
     .header-zk-link:hover { opacity: 1; background: rgba(255,255,255,0.1); }
     .header-zk-wordmark {
-      height: 18px;
-      width: auto;
+      height: 22px;
+      width: 95px;
       object-fit: contain;
+      flex-shrink: 0;
     }
     .header-help-btn {
       font-family: 'DM Sans', sans-serif;
@@ -1668,11 +1678,17 @@
       font-weight: 500;
       color: rgba(255,255,255,0.75);
       text-decoration: none;
-      padding: 5px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
       border: 1px solid rgba(255,255,255,0.25);
       border-radius: 20px;
       transition: all 0.15s;
       white-space: nowrap;
+      line-height: 1;
+      cursor: pointer;
+      background: none;
     }
     .header-help-btn:hover { color: #fff; border-color: rgba(255,255,255,0.6); }
     .header-zk-logo { display: none; } /* hide old */
@@ -2057,6 +2073,12 @@
       opacity: 1;
     }
     .header-zk-link:hover { background: rgba(255,255,255,0.08); }
+    .header-nav.mobile-open .header-zk-wordmark {
+      height: 26px;
+      width: 112px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
 
     .header-help-btn {
       display: block;
@@ -2516,7 +2538,7 @@
 
   <div class="header-nav" id="header-nav">
     <a href="https://www.zukunvt.com/it" target="_blank" class="header-zk-link">
-      <img src="data:image/png;base64,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" alt="zukunvt" class="header-zk-wordmark" />
+      <img src="data:image/svg+xml;base64,PHN2ZyBpZD0iRWJlbmVfMSIgZGF0YS1uYW1lPSJFYmVuZSAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzAwIiBoZWlnaHQ9IjM5NSIgdmlld0JveD0iMCAwIDE3MDAgMzk1Ij48dGl0bGU+WmVpY2hlbmZsw6RjaGUgMTwvdGl0bGU+PHBhdGggZD0iTTEwNS40Nzc5MiwzMTAuMTE3MjdIMjE2LjUxMzA3djU1LjA2NzM0SDI3Ljg0MjExVjMxNy4wMDkzNUwxMzYuMTY5NTQsMTgxLjQ3NTY5SDI4Ljc0MjU4di01MS40NTZIMjEwLjE5NHY0OC4xNzg0MVoiIHN0eWxlPSJmaWxsOiNmZmZmZmYiLz48cGF0aCBkPSJNMjQ2LjMwMTA3LDEzMC4wMTk2OGg2OC42MDkwNlYyNzguNTIycTAsMTguOTU3MTUsNi43MjUyLDI3Ljc2MDM3LDYuNzI5OTMsOC43OTg0OSwyMi44ODAxOCw4LjgwMDA3YTU2LjYyODU0LDU2LjYyODU0LDAsMCwwLDI1LjM0ODYxLTYuMDkyMzZxMTIuMzMxMTItNi4wOTcwOCwxOS4wNzA0OS0xMi40MTQ1NVYxMzAuMDE5NjhoNjguNjA1OTFWMzY1LjE4NDYxSDM5OC40NzQ1OGwtNC45OTk4Mi0yNS4yNzYxOWE4NC4yOTY5NCw4NC4yOTY5NCwwLDAsMS0zMS42MDE1NCwyMi4zNDE3OXEtMTguOTU3MTUsNy44OTE3My00My4zMzkxNiw3Ljg5OTU5LTcyLjIzNDU3LDAtNzIuMjMzLTc4LjA4NloiIHN0eWxlPSJmaWxsOiNmZmZmZmYiLz48cGF0aCBkPSJNNTY4LjU3MjUyLDIxMi4xNzA0Nmw3Ny42MzU4Mi04Mi4xNTA3OGg3NS4zNzgzNGwtNzguMDg2LDg0LjQwODI1LDgzLjk1NDg2LDE1MC43NTY2OEg2NTIuMDc3MTVMNTkxLjE0MSwyNTcuNzU3NjVsLTIyLjU2ODQ4LDIyLjExODI0djg1LjMwODcySDQ5OS45NjM0N1YyNC40aDY4LjYwOTA1WiIgc3R5bGU9ImZpbGw6I2ZmZmZmZiIvPjxwYXRoIGQ9Ik03NDUuOTU5MjUsMTMwLjAxOTY4aDY4LjYwOTA2VjI3OC41MjJxMCwxOC45NTcxNSw2LjcyNTIsMjcuNzYwMzcsNi43Mjk5Myw4Ljc5ODQ5LDIyLjg4MDE4LDguODAwMDdhNTYuNjI4NTQsNTYuNjI4NTQsMCwwLDAsMjUuMzQ4NjEtNi4wOTIzNnExMi4zMzExMy02LjA5NzA4LDE5LjA3MDQ5LTEyLjQxNDU1VjEzMC4wMTk2OEg5NTcuMTk4N1YzNjUuMTg0NjFIODk4LjEzMjc2bC00Ljk5OTgzLTI1LjI3NjE5YTg0LjI5NjgyLDg0LjI5NjgyLDAsMCwxLTMxLjYwMTUzLDIyLjM0MTc5cS0xOC45NTcxNSw3Ljg5MTczLTQzLjMzOTE2LDcuODk5NTktNzIuMjM0NTcsMC03Mi4yMzMtNzguMDg2WiIgc3R5bGU9ImZpbGw6I2ZmZmZmZiIvPjxwYXRoIGQ9Ik0xMjEyLjY2ODMzLDM2NS4xODQ2MWgtNjguNjA5MDVWMjE2LjIzMnEwLTE4Ljk1NzE1LTcuNjI4ODMtMjcuNTMzNjctNy42MjcyNC04LjU2NzA4LTIzLjMzMDQyLTguNTc2NTNhNTkuOTQwMTYsNTkuOTQwMTYsMCwwLDAtMjYuNDgyMDYsNi4wOTU1MXEtMTIuNTY3MjUsNi4wOTIzNS0xOS4yOTA4OSwxMi40MTE0VjM2NS4xODQ2MUg5OTguNzIxMTdWMTMwLjAxOTY4aDYwLjg4MjYzbDMuNjMzMzcsMjMuNDcyMWExMjEuMTU2LDEyMS4xNTYsMCwwLDEsMzEuODIxOTQtMjAuMDg0MzFxMTguNzM1MTctOC4zNDk4Miw0My4xMTg3Ni04LjM1MywzOS4yNjk3MiwwLDU2Ljg4MDg4LDE5LjQxMDUzLDE3LjYwMTcxLDE5LjQxMDUyLDE3LjYwOTU4LDYwLjAzMjUzWiIgc3R5bGU9ImZpbGw6I2ZmZmZmZiIvPjxwYXRoIGQ9Ik0xMzEwLjYxNTE1LDM2NS4xODQ2MWwtODMuMDUxMjQtMjM1LjE2NDkzaDczLjU3MTFsNTAuMTAyMTQsMTY5LjcxN2gxLjgwNzI1bDUwLjEwMjE0LTE2OS43MTdoNjkuOTU5NzdsLTgzLjA1MTI1LDIzNS4xNjQ5M1oiIHN0eWxlPSJmaWxsOiNmZmZmZmYiLz48cGF0aCBkPSJNMTY3Mi4xNTc4OSwzNTMuOTAwMzdxLTkuMDM0NjIsNS44NzA0LTI3Ljc2MDM2LDExLjI4NDI0QTE0OC4zMzYsMTQ4LjMzNiwwLDAsMSwxNjAzLjA5ODYsMzcwLjZxLTM3LjIyLDAtNTYuMjk1MjUtMTcuODI2ODMtMTkuMDg0NjYtMTcuODI4NC0xOS4wODMwOS01OC40NTUxM1YxNzkuNjcxNTloLTM1LjIwNjU3VjEzMC4wMTk2OGgzNS4yMDY1N1Y2MC41MTAxNWw2OC42MDU5MS05LjAyNjc2djc4LjUzNjI5aDYyLjI5djQ5LjY1MTkxaC02Mi4yOVYyODQuODQxMDhxMCwxNS44MDIzNSw1LjY0MjEyLDIzLjY5NTY1LDUuNjM5LDcuOTA1ODksMjEuODkxNTUsNy44OTk1OWE3MC44ODcsNzAuODg3LDAsMCwwLDIxLjIxNDYyLTMuMzg0NjQsODIuMjIxMDcsODIuMjIxMDcsMCwwLDAsMTcuNjAzMjktNy40NDkzNloiIHN0eWxlPSJmaWxsOiNmZmZmZmYiLz48L3N2Zz4=" alt="zukunvt" class="header-zk-wordmark" style="height:22px;width:95px;object-fit:contain;flex-shrink:0;" />
     </a>
     <button class="header-help-btn" onclick="showArchive();closeMobileMenu()" id="btn-archive-home" style="cursor:pointer;background:none;">📁 <span data-i18n="archive_title">Dashboard salvate</span></button>
     <a href="mailto:marketing@zukunvt.com" class="header-help-btn" data-i18n="help_btn">Aiuto</a>
