@@ -4409,33 +4409,6 @@
         </div>
       </div>
 
-      <!-- FOLLOWER SECTION — only followers gained from ads in selected period -->
-      <div class="follower-section" id="follower-section">
-        <div class="follower-section-header">
-          <span class="follower-section-icon">👤</span>
-          <span class="follower-section-title">${t('followers_from_ads')}</span>
-          <span class="follower-ads-badge">📅 ${fmtDate(period.from)} → ${fmtDate(period.to)}</span>
-        </div>
-        <div class="follower-platforms" style="justify-content:center;padding:8px 0;">
-          <div class="follower-platform">
-            <div class="follower-platform-icon">📘</div>
-            <div class="follower-platform-label">${t('followers_fb_ads')}</div>
-            <div class="follower-platform-value from-ads">${totalFbFollowersAds > 0 ? '+' + totalFbFollowersAds.toLocaleString('it-IT') : '0'}</div>
-          </div>
-          <div class="follower-divider"></div>
-          <div class="follower-platform">
-            <div class="follower-platform-icon">📸</div>
-            <div class="follower-platform-label">${t('followers_ig_ads')}</div>
-            <div class="follower-platform-value from-ads">${totalIgFollowersAds > 0 ? '+' + totalIgFollowersAds.toLocaleString('it-IT') : '0'}</div>
-          </div>
-        </div>
-        ${(totalFbFollowersAds + totalIgFollowersAds) > 0 ? `
-        <div class="follower-total-row">
-          <span class="follower-total-label">${t('followers_total_ads')}:</span>
-          <span class="follower-total-value from-ads">+${(totalFbFollowersAds + totalIgFollowersAds).toLocaleString('it-IT')}</span>
-        </div>` : ''}
-      </div>
-
       <div class="summary-sections">
 
         <!-- ENGAGEMENT -->
