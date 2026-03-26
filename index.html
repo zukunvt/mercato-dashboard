@@ -2304,6 +2304,7 @@
   <!-- Firebase SDK (compat mode for simple script-tag usage) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -2341,21 +2342,34 @@
     <h2 id="auth-title" data-i18n="login_title">Accedi alla Dashboard</h2>
     <p id="auth-desc" data-i18n="login_desc">Inserisci le tue credenziali per accedere.</p>
 
-    <div class="field">
+    <div class="field" id="field-username">
       <label data-i18n="auth_username">Nome utente</label>
       <input type="text" id="input-username" data-i18n-placeholder="auth_username_ph" placeholder="Il tuo nome utente…" autocomplete="username" />
     </div>
-    <div class="field">
+    <div class="field" id="field-email" style="display:none;">
+      <label data-i18n="auth_email">Email</label>
+      <input type="email" id="input-email" data-i18n-placeholder="auth_email_ph" placeholder="La tua email…" autocomplete="email" />
+    </div>
+    <div class="field" id="field-password">
       <label data-i18n="auth_password">Password</label>
       <input type="password" id="input-password" data-i18n-placeholder="auth_password_ph" placeholder="La tua password…" autocomplete="current-password" />
+      <p id="forgot-link" onclick="showForgotMode()" style="font-size:0.76rem;color:var(--salmone);margin-top:6px;cursor:pointer;text-align:right;" data-i18n="auth_forgot">Password dimenticata?</p>
+    </div>
+    <div class="field" id="field-new-password" style="display:none;">
+      <label data-i18n="auth_new_password">Nuova Password</label>
+      <input type="password" id="input-new-password" data-i18n-placeholder="auth_new_password_ph" placeholder="Nuova password…" autocomplete="new-password" />
     </div>
 
     <div class="error-box" id="token-error"></div>
+    <div class="success-box" id="token-success" style="display:none;background:#e8f5e9;border:1px solid #a5d6a7;color:#2e7d32;border-radius:8px;padding:10px 14px;font-size:0.83rem;margin-bottom:8px;"></div>
 
     <button class="btn-primary" id="auth-action-btn" onclick="doLogin()" data-i18n="login_btn">Accedi</button>
 
     <p style="font-size:0.82rem;color:var(--corallo);margin-top:16px;text-align:center;cursor:pointer;" id="auth-toggle" onclick="toggleAuthMode()">
       <span data-i18n="login_toggle">Non hai un account? <strong>Registrati</strong></span>
+    </p>
+    <p style="font-size:0.78rem;color:var(--salmone);margin-top:8px;text-align:center;cursor:pointer;" id="back-to-login" style="display:none;" onclick="showLoginMode()">
+      <span data-i18n="auth_back_login">← Torna al login</span>
     </p>
 
     <p style="font-size:0.72rem;color:var(--salmone);margin-top:12px;text-align:center;line-height:1.5;" data-i18n="auth_disclaimer">
@@ -2499,6 +2513,19 @@
   } catch(e) {
     console.warn('[Firebase] SDK not available — archive features disabled.', e.message);
   }
+
+  // ── EMAILJS CONFIG ──────────────────────────────────────────
+  // ⚠️ Configura questi valori con le tue credenziali EmailJS:
+  //    1. Registrati su https://www.emailjs.com (gratuito, 200 email/mese)
+  //    2. Crea un "Email Service" collegando Gmail o altro
+  //    3. Crea un "Email Template" con variabili: {{to_email}}, {{username}}, {{reset_link}}
+  //    4. Copia Service ID, Template ID e Public Key qui sotto
+  const EMAILJS_SERVICE_ID  = 'service_2bb1rxh';
+  const EMAILJS_TEMPLATE_ID = 'template_mynb7iu';
+  const EMAILJS_PUBLIC_KEY  = 'MEP4ZvMt2snAFc84c';
+
+  // Inizializza EmailJS
+  try { emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY }); } catch(e) { console.warn('[EmailJS] init failed', e); }
 
   // ── CONFIG ──────────────────────────────────────────────────
   const AD_ACCOUNT_ID = '2094491168046157';
@@ -2825,6 +2852,28 @@
       auth_err_password_short: 'La password deve avere almeno 4 caratteri.',
       auth_err_generic: 'Errore di connessione. Riprova tra qualche secondo.',
       auth_registered: '✅ Account creato! Benvenuto nella dashboard.',
+      // Email & forgot password
+      auth_email: 'Email',
+      auth_email_ph: 'La tua email…',
+      auth_forgot: 'Password dimenticata?',
+      auth_back_login: '← Torna al login',
+      auth_new_password: 'Nuova Password',
+      auth_new_password_ph: 'Nuova password…',
+      forgot_title: 'Recupera la password',
+      forgot_desc: 'Inserisci la tua email. Ti invieremo un link per reimpostare la password.',
+      forgot_btn: 'Invia link di recupero',
+      forgot_sent: '✅ Email inviata! Controlla la tua casella. Il link scade tra 1 ora.',
+      forgot_err_email: 'Inserisci un indirizzo email valido.',
+      forgot_err_not_found: 'Nessun account associato a questa email.',
+      forgot_err_send: 'Errore nell\'invio dell\'email. Riprova tra poco.',
+      reset_title: 'Crea nuova password',
+      reset_desc: 'Scegli una nuova password per il tuo account.',
+      reset_btn: 'Salva nuova password',
+      reset_success: '✅ Password aggiornata con successo! Ora puoi accedere.',
+      reset_err_short: 'La password deve avere almeno 4 caratteri.',
+      reset_err_token: 'Link scaduto o non valido. Richiedi un nuovo link.',
+      auth_err_email_missing: 'Per registrarti inserisci anche l\'email.',
+      auth_err_email_invalid: 'Inserisci un indirizzo email valido.',
     },
     de: {
       header_sub: 'Performance Dashboard',
@@ -3022,6 +3071,28 @@
       auth_err_password_short: 'Das Passwort muss mindestens 4 Zeichen lang sein.',
       auth_err_generic: 'Verbindungsfehler. Bitte in einigen Sekunden erneut versuchen.',
       auth_registered: '✅ Konto erstellt! Willkommen im Dashboard.',
+      // Email & forgot password
+      auth_email: 'E-Mail',
+      auth_email_ph: 'Deine E-Mail…',
+      auth_forgot: 'Passwort vergessen?',
+      auth_back_login: '← Zurück zum Login',
+      auth_new_password: 'Neues Passwort',
+      auth_new_password_ph: 'Neues Passwort…',
+      forgot_title: 'Passwort zurücksetzen',
+      forgot_desc: 'Gib deine E-Mail-Adresse ein. Wir senden dir einen Link zum Zurücksetzen.',
+      forgot_btn: 'Wiederherstellungslink senden',
+      forgot_sent: '✅ E-Mail gesendet! Überprüfe dein Postfach. Der Link läuft in 1 Stunde ab.',
+      forgot_err_email: 'Bitte eine gültige E-Mail-Adresse eingeben.',
+      forgot_err_not_found: 'Kein Konto mit dieser E-Mail-Adresse gefunden.',
+      forgot_err_send: 'Fehler beim Senden der E-Mail. Bitte erneut versuchen.',
+      reset_title: 'Neues Passwort erstellen',
+      reset_desc: 'Wähle ein neues Passwort für dein Konto.',
+      reset_btn: 'Neues Passwort speichern',
+      reset_success: '✅ Passwort erfolgreich aktualisiert! Du kannst dich jetzt anmelden.',
+      reset_err_short: 'Das Passwort muss mindestens 4 Zeichen lang sein.',
+      reset_err_token: 'Link abgelaufen oder ungültig. Bitte einen neuen Link anfordern.',
+      auth_err_email_missing: 'Bitte auch die E-Mail-Adresse eingeben.',
+      auth_err_email_invalid: 'Bitte eine gültige E-Mail-Adresse eingeben.',
     }
   };
 
@@ -3226,8 +3297,9 @@
   }
 
   // ── AUTH SYSTEM ───────────────────────────────────────────────
-  let _authMode = 'login'; // 'login' or 'register'
+  let _authMode = 'login'; // 'login' | 'register' | 'forgot' | 'reset'
   let _loggedInUser = null;
+  let _resetUsername = null; // used during reset flow
 
   async function hashPassword(password) {
     const encoder = new TextEncoder();
@@ -3237,26 +3309,58 @@
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
+  function _setAuthUI({ title, desc, btnLabel, btnFn, showUsername, showEmail, showPassword, showNewPwd, showToggle, showForgot, showBack }) {
+    document.getElementById('auth-title').innerHTML = t(title);
+    document.getElementById('auth-desc').innerHTML  = t(desc);
+    const btn = document.getElementById('auth-action-btn');
+    btn.innerHTML = t(btnLabel);
+    btn.setAttribute('onclick', btnFn + '()');
+    document.getElementById('field-username').style.display    = showUsername  ? '' : 'none';
+    document.getElementById('field-email').style.display       = showEmail     ? '' : 'none';
+    document.getElementById('field-password').style.display    = showPassword  ? '' : 'none';
+    document.getElementById('field-new-password').style.display = showNewPwd   ? '' : 'none';
+    document.getElementById('auth-toggle').style.display       = showToggle    ? '' : 'none';
+    document.getElementById('back-to-login').style.display     = showBack      ? '' : 'none';
+    document.getElementById('forgot-link').style.display       = showForgot    ? '' : 'none';
+    document.getElementById('token-error').style.display = 'none';
+    document.getElementById('token-success').style.display = 'none';
+    applyI18n();
+  }
+
   function toggleAuthMode() {
     _authMode = _authMode === 'login' ? 'register' : 'login';
-    const titleEl = document.getElementById('auth-title');
-    const descEl = document.getElementById('auth-desc');
-    const btnEl = document.getElementById('auth-action-btn');
-    const toggleEl = document.getElementById('auth-toggle');
     if (_authMode === 'register') {
-      titleEl.innerHTML = t('register_title');
-      descEl.innerHTML = t('register_desc');
-      btnEl.innerHTML = t('register_btn');
-      btnEl.setAttribute('onclick', 'doRegister()');
-      toggleEl.innerHTML = '<span>' + t('register_toggle') + '</span>';
+      _setAuthUI({ title:'register_title', desc:'register_desc', btnLabel:'register_btn', btnFn:'doRegister',
+        showUsername:true, showEmail:true, showPassword:true, showNewPwd:false,
+        showToggle:true, showForgot:false, showBack:false });
+      document.getElementById('auth-toggle').innerHTML = '<span>' + t('register_toggle') + '</span>';
     } else {
-      titleEl.innerHTML = t('login_title');
-      descEl.innerHTML = t('login_desc');
-      btnEl.innerHTML = t('login_btn');
-      btnEl.setAttribute('onclick', 'doLogin()');
-      toggleEl.innerHTML = '<span>' + t('login_toggle') + '</span>';
+      showLoginMode();
     }
-    document.getElementById('token-error').style.display = 'none';
+  }
+
+  function showLoginMode() {
+    _authMode = 'login';
+    _setAuthUI({ title:'login_title', desc:'login_desc', btnLabel:'login_btn', btnFn:'doLogin',
+      showUsername:true, showEmail:false, showPassword:true, showNewPwd:false,
+      showToggle:true, showForgot:true, showBack:false });
+    document.getElementById('auth-toggle').innerHTML = '<span>' + t('login_toggle') + '</span>';
+  }
+
+  function showForgotMode() {
+    _authMode = 'forgot';
+    _setAuthUI({ title:'forgot_title', desc:'forgot_desc', btnLabel:'forgot_btn', btnFn:'doForgotPassword',
+      showUsername:false, showEmail:true, showPassword:false, showNewPwd:false,
+      showToggle:false, showForgot:false, showBack:true });
+    document.getElementById('input-email').value = '';
+  }
+
+  function showResetMode(username) {
+    _authMode = 'reset';
+    _resetUsername = username;
+    _setAuthUI({ title:'reset_title', desc:'reset_desc', btnLabel:'reset_btn', btnFn:'doResetPassword',
+      showUsername:false, showEmail:false, showPassword:false, showNewPwd:true,
+      showToggle:false, showForgot:false, showBack:true });
   }
 
   async function doLogin() {
@@ -3287,7 +3391,10 @@
   async function doRegister() {
     const username = document.getElementById('input-username').value.trim().toLowerCase();
     const password = document.getElementById('input-password').value;
+    const email    = document.getElementById('input-email').value.trim().toLowerCase();
     if (!username || !password) { showTokenError(t('auth_err_empty')); return; }
+    if (!email) { showTokenError(t('auth_err_email_missing')); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showTokenError(t('auth_err_email_invalid')); return; }
     if (username.length < 3) { showTokenError(t('auth_err_username_short')); return; }
     if (password.length < 4) { showTokenError(t('auth_err_password_short')); return; }
 
@@ -3298,6 +3405,7 @@
       const hash = await hashPassword(password);
       await db.collection('users').doc(username).set({
         username: username,
+        email: email,
         passwordHash: hash,
         createdAt: new Date().toISOString()
       });
@@ -3316,9 +3424,123 @@
     }
   }
 
+  async function doForgotPassword() {
+    const email = document.getElementById('input-email').value.trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showTokenError(t('forgot_err_email')); return;
+    }
+
+    try {
+      // Find user by email
+      const snap = await db.collection('users').where('email', '==', email).limit(1).get();
+      if (snap.empty) { showTokenError(t('forgot_err_not_found')); return; }
+
+      const userDoc = snap.docs[0];
+      const username = userDoc.id;
+
+      // Generate reset token
+      const token = Array.from(crypto.getRandomValues(new Uint8Array(24)))
+        .map(b => b.toString(16).padStart(2, '0')).join('');
+      const expiry = new Date(Date.now() + 3600 * 1000).toISOString(); // 1 hour
+
+      // Save token to Firestore
+      await db.collection('users').doc(username).update({
+        resetToken: token,
+        resetTokenExpiry: expiry
+      });
+
+      // Build reset link
+      const baseUrl = window.location.href.split('?')[0];
+      const resetLink = baseUrl + '?reset=' + token + '&user=' + encodeURIComponent(username);
+
+      // Send email via EmailJS
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        to_email:   email,
+        username:   username,
+        reset_link: resetLink
+      });
+
+      document.getElementById('token-error').style.display = 'none';
+      const successEl = document.getElementById('token-success');
+      successEl.textContent = t('forgot_sent');
+      successEl.style.display = 'block';
+
+    } catch(e) {
+      console.error('[Auth] forgot password error:', e);
+      showTokenError(t('forgot_err_send'));
+    }
+  }
+
+  async function doResetPassword() {
+    const newPassword = document.getElementById('input-new-password').value;
+    if (!newPassword || newPassword.length < 4) {
+      showTokenError(t('reset_err_short')); return;
+    }
+    if (!_resetUsername) { showTokenError(t('reset_err_token')); return; }
+
+    try {
+      const userDoc = await db.collection('users').doc(_resetUsername).get();
+      if (!userDoc.exists) { showTokenError(t('reset_err_token')); return; }
+
+      const params = new URLSearchParams(window.location.search);
+      const token  = params.get('reset');
+      const data   = userDoc.data();
+
+      if (!token || data.resetToken !== token) { showTokenError(t('reset_err_token')); return; }
+      if (!data.resetTokenExpiry || new Date(data.resetTokenExpiry) < new Date()) {
+        showTokenError(t('reset_err_token')); return;
+      }
+
+      const newHash = await hashPassword(newPassword);
+      await db.collection('users').doc(_resetUsername).update({
+        passwordHash: newHash,
+        resetToken: null,
+        resetTokenExpiry: null
+      });
+
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+
+      // Show success and switch to login
+      const successEl = document.getElementById('token-success');
+      successEl.textContent = t('reset_success');
+      successEl.style.display = 'block';
+      document.getElementById('token-error').style.display = 'none';
+
+      setTimeout(() => {
+        _resetUsername = null;
+        showLoginMode();
+      }, 2500);
+
+    } catch(e) {
+      console.error('[Auth] reset password error:', e);
+      showTokenError(t('auth_err_generic'));
+    }
+  }
+
+  // Check URL params for reset token on page load
+  (async function checkResetToken() {
+    const params = new URLSearchParams(window.location.search);
+    const token  = params.get('reset');
+    const user   = params.get('user');
+    if (!token || !user) return;
+    try {
+      const userDoc = await db.collection('users').doc(user).get();
+      if (!userDoc.exists) return;
+      const data = userDoc.data();
+      if (data.resetToken !== token || new Date(data.resetTokenExpiry) < new Date()) return;
+      // Valid token — show reset form
+      showResetMode(user);
+    } catch(e) {
+      console.warn('[Auth] checkResetToken error:', e);
+    }
+  })();
+
   document.addEventListener('keydown', e => {
     if (e.key === 'Enter' && document.getElementById('screen-token').classList.contains('active')) {
       if (_authMode === 'register') doRegister();
+      else if (_authMode === 'forgot') doForgotPassword();
+      else if (_authMode === 'reset') doResetPassword();
       else doLogin();
     }
   });
