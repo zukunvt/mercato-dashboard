@@ -7,230 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js">
-
-  // ── RENAME ───────────────────────────────────────────────────
-  function getRenames() {
-    try { return JSON.parse(localStorage.getItem(RENAMES_KEY) || '{}'); } catch(e) { return {}; }
-  }
-  function saveRename(originalName, newName) {
-    const map = getRenames();
-    if (newName && newName !== originalName) {
-      map[originalName] = newName;
-    } else {
-      delete map[originalName];
-    }
-    localStorage.setItem(RENAMES_KEY, JSON.stringify(map));
-  }
-  function getDisplayName(originalName) {
-    const map = getRenames();
-    return map[originalName] || originalName;
-  }
-
-  function renameUI(type, originalName, displayKey) {
-    const currentDisplay = getDisplayName(originalName);
-    const safeOrig = originalName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-    const safeDisp = currentDisplay.replace(/"/g, '&quot;');
-    return `<span class="rename-display-wrap" style="display:flex;align-items:center;gap:5px;min-width:0;">
-      <span class="rename-label" title="${safeOrig}">${currentDisplay}</span>
-      <button class="btn-rename-title" title="${t('rename_title')}" onclick="startRename(this, '${safeOrig}')">✏️</button>
-    </span>`;
-  }
-
-  function startRename(btn, originalName) {
-    const wrap = btn.closest('.rename-display-wrap');
-    const label = wrap.querySelector('.rename-label');
-    const currentText = label.textContent;
-    const inp = document.createElement('input');
-    inp.type = 'text';
-    inp.className = 'rename-input';
-    inp.value = currentText;
-    inp.placeholder = t('rename_placeholder');
-    wrap.replaceWith(inp);
-    inp.focus();
-    inp.select();
-    const commit = () => {
-      const newName = inp.value.trim() || currentText;
-      saveRename(originalName, newName);
-      const newWrap = document.createElement('span');
-      newWrap.className = 'rename-display-wrap';
-      newWrap.style.cssText = 'display:flex;align-items:center;gap:5px;min-width:0;';
-      const safeOrig = originalName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-      newWrap.innerHTML = `<span class="rename-label" title="${originalName}">${newName}</span>
-        <button class="btn-rename-title" title="${t('rename_title')}" onclick="startRename(this, '${safeOrig}')">✏️</button>`;
-      inp.replaceWith(newWrap);
-    };
-    inp.addEventListener('blur', commit);
-    inp.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.preventDefault(); commit(); }
-      if (e.key === 'Escape') { inp.value = currentText; commit(); }
-    });
-  }
-
-  // ── PERIOD EDITOR ────────────────────────────────────────────
-  function togglePeriodEditor() {
-    const el = document.getElementById('period-editor');
-    el.classList.toggle('open');
-    if (el.classList.contains('open')) {
-      el.querySelector('input').focus();
-    }
-  }
-
-  async function refetchData() {
-    const from = document.getElementById('re-date-from').value;
-    const to   = document.getElementById('re-date-to').value;
-    if (!from || !to) return;
-    const diff = (new Date(to) - new Date(from)) / (1000*60*60*24);
-    if (diff < 0)  { showToast('❌ ' + t('toast_date_err').replace('❌ ','')); return; }
-    if (diff > 62) { showToast('❌ ' + t('toast_range_err').replace('❌ ','')); return; }
-
-    // update home inputs too
-    document.getElementById('date-from').value = from;
-    document.getElementById('date-to').value   = to;
-
-    document.getElementById('period-editor').classList.remove('open');
-    await fetchData();
-  }
-
-  // ── SAVE DASHBOARD ───────────────────────────────────────────
-  function saveDashboard() {
-    if (!_currentData || !_currentPeriod) return;
-    // Check duplicate before opening modal
-    try {
-      const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      const dup = existing.find(s => s.period.from === _currentPeriod.from && s.period.to === _currentPeriod.to);
-      if (dup) { showToast(t('toast_dup')); return; }
-    } catch(e) {}
-    // Pre-fill with period label and open modal
-    const defaultName = fmtDate(_currentPeriod.from) + ' → ' + fmtDate(_currentPeriod.to);
-    const inp = document.getElementById('save-name-input');
-    inp.value = defaultName;
-    // translate modal texts
-    applyTranslations();
-    document.getElementById('modal-save-name').classList.add('open');
-    setTimeout(() => { inp.select(); }, 80);
-  }
-
-  function closeSaveModal() {
-    document.getElementById('modal-save-name').classList.remove('open');
-  }
-
-  function confirmSave() {
-    const customLabel = document.getElementById('save-name-input').value.trim();
-    const label = fmtDate(_currentPeriod.from) + ' → ' + fmtDate(_currentPeriod.to);
-    const savedAt = new Date().toLocaleDateString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-
-    const campaigns = _currentData.campaigns || [];
-    const totalSpend = campaigns.reduce((s,c) => s + parseFloat(c.spend||0), 0);
-    const totalReach = campaigns.reduce((s,c) => s + parseInt(c.reach||0), 0);
-    const totalImp   = campaigns.reduce((s,c) => s + parseInt(c.impressions||0), 0);
-    const totalEng   = campaigns.reduce((s,c) => s + parseInt(c.page_engagement||0), 0);
-
-    const snapshot = {
-      id:          Date.now(),
-      label,
-      customLabel: customLabel || label,
-      savedAt,
-      period:      _currentPeriod,
-      stats:       { totalSpend: totalSpend.toFixed(2), totalReach, totalImp, totalEng },
-      data:        _currentData
-    };
-
-    try {
-      const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      existing.unshift(snapshot);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-      closeSaveModal();
-      const btn = document.getElementById('btn-save-dash');
-      if (btn) { btn.classList.add('saved'); btn.innerHTML = '✓ ' + (_lang==='de' ? 'Gespeichert' : 'Salvata'); }
-      showToast(t('toast_saved'));
-    } catch(e) {
-      closeSaveModal();
-      showToast(t('toast_err'));
-    }
-  }
-
-  // ── ARCHIVE ──────────────────────────────────────────────────
-  function showArchive() {
-    renderArchive();
-    showScreen('archive');
-  }
-
-  function renderArchive() {
-    const list = document.getElementById('archive-list');
-    let saved = [];
-    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) {}
-
-    if (!saved.length) {
-      list.innerHTML = `
-        <div class="archive-empty">
-          <div class="archive-empty-icon">📭</div>
-          <p>${t('archive_empty_msg')}</p>
-        </div>`;
-      return;
-    }
-
-    list.innerHTML = `<div class="archive-grid">${saved.map(s => `
-      <div class="archive-card">
-        <button class="archive-card-delete" onclick="deleteSnapshot(${s.id}, event)" title="${t('cancel_btn')}">✕</button>
-        <div class="archive-card-period">${s.customLabel || s.label}</div>
-        <div class="archive-card-meta">${t('archive_saved_on')} ${s.savedAt}</div>
-        <div class="archive-card-stats">
-          <div class="archive-stat">
-            <div class="archive-stat-label">${t('kpi_spend')}</div>
-            <div class="archive-stat-value">€ ${parseFloat(s.stats.totalSpend).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-          </div>
-          <div class="archive-stat">
-            <div class="archive-stat-label">${t('reach')}</div>
-            <div class="archive-stat-value">${parseInt(s.stats.totalReach).toLocaleString('it-IT')}</div>
-          </div>
-          <div class="archive-stat">
-            <div class="archive-stat-label">${t('impressions')}</div>
-            <div class="archive-stat-value">${parseInt(s.stats.totalImp).toLocaleString('it-IT')}</div>
-          </div>
-          <div class="archive-stat">
-            <div class="archive-stat-label">${t('eng_page')}</div>
-            <div class="archive-stat-value">${parseInt(s.stats.totalEng).toLocaleString('it-IT')}</div>
-          </div>
-        </div>
-        <button class="archive-card-open" onclick="openSnapshot(${s.id})">${t('archive_open_btn')}</button>
-      </div>`).join('')}</div>`;
-  }
-
-  function openSnapshot(id) {
-    let saved = [];
-    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) {}
-    const snap = saved.find(s => s.id === id);
-    if (!snap) return;
-    renderResults(snap.period, snap.data);
-    // mark save button as already saved
-    const btn = document.getElementById('btn-save-dash');
-    if (btn) { btn.classList.add('saved'); btn.innerHTML = '✓ ' + (_lang==='de' ? 'Bereits gespeichert' : 'Già salvata'); }
-  }
-
-  function deleteSnapshot(id, e) {
-    e.stopPropagation();
-    if (!confirm(t('archive_delete_confirm'))) return;
-    try {
-      let saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      saved = saved.filter(s => s.id !== id);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
-      renderArchive();
-      showToast(t('toast_deleted'));
-    } catch(e) {}
-  }
-
-  // ── TOAST ────────────────────────────────────────────────────
-  let _toastTimer;
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    clearTimeout(_toastTimer);
-    _toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
-  }
-
-</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
     /* ── CAMPAIGN SELECTOR ──────────────────────────── */
     #screen-selector {
@@ -2524,6 +2301,9 @@
   }
 
   </style>
+  <!-- Firebase SDK (compat mode for simple script-tag usage) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -2692,6 +2472,20 @@
 </div>
 
 <script>
+  // ── FIREBASE INIT ───────────────────────────────────────────
+  const firebaseConfig = {
+    apiKey: "AIzaSyD0cH8qmXFk8Oz9DPCyXA9ao4tK6l_2eL4",
+    authDomain: "mercato-centrale-dashboard.firebaseapp.com",
+    projectId: "mercato-centrale-dashboard",
+    storageBucket: "mercato-centrale-dashboard.firebasestorage.app",
+    messagingSenderId: "224010428839",
+    appId: "1:224010428839:web:5d7808b7e0a6e349881682",
+    measurementId: "G-1SJR8KH2EG"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const DASHBOARDS_COLLECTION = 'saved_dashboards';
+
   // ── CONFIG ──────────────────────────────────────────────────
   const AD_ACCOUNT_ID = '2094491168046157';
   const API_VERSION   = 'v22.0';
@@ -2705,6 +2499,7 @@
   let _selectedCampaigns = new Set();
   const STORAGE_KEY  = 'mc_saved_dashboards';
   const RENAMES_KEY  = 'mc_renames';
+  let _lang = localStorage.getItem('mc_lang') || 'it';
 
   // ── FOLLOWER DATA ────────────────────────────────────────────
   let _followerData = null; // { fb: number|null, ig: number|null }
@@ -3170,8 +2965,6 @@
       rename_placeholder: 'Neuer Name…',
     }
   };
-
-  let _lang = localStorage.getItem('mc_lang') || 'it';
 
   function t(key) {
     return (TRANSLATIONS[_lang] && TRANSLATIONS[_lang][key]) || TRANSLATIONS['it'][key] || key;
@@ -4844,20 +4637,68 @@
     await fetchData();
   }
 
-  // ── SAVE DASHBOARD ───────────────────────────────────────────
-  function saveDashboard() {
-    if (!_currentData || !_currentPeriod) return;
-    // Check duplicate before opening modal
+  // ── FIRESTORE HELPERS ─────────────────────────────────────────
+  let _firestoreCache = null;
+
+  async function firestoreGetAll() {
     try {
-      const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      const snap = await db.collection(DASHBOARDS_COLLECTION)
+        .orderBy('id', 'desc')
+        .get();
+      const results = [];
+      snap.forEach(doc => results.push({ _docId: doc.id, ...doc.data() }));
+      _firestoreCache = results;
+      return results;
+    } catch(e) {
+      console.error('[Firestore] getAll error:', e);
+      return _firestoreCache || [];
+    }
+  }
+
+  async function firestoreAdd(snapshot) {
+    try {
+      await db.collection(DASHBOARDS_COLLECTION).doc(String(snapshot.id)).set(snapshot);
+      _firestoreCache = null;
+      return true;
+    } catch(e) {
+      console.error('[Firestore] add error:', e);
+      return false;
+    }
+  }
+
+  async function firestoreDelete(id) {
+    try {
+      await db.collection(DASHBOARDS_COLLECTION).doc(String(id)).delete();
+      _firestoreCache = null;
+      return true;
+    } catch(e) {
+      console.error('[Firestore] delete error:', e);
+      return false;
+    }
+  }
+
+  async function firestoreGetOne(id) {
+    try {
+      const doc = await db.collection(DASHBOARDS_COLLECTION).doc(String(id)).get();
+      if (doc.exists) return { _docId: doc.id, ...doc.data() };
+      return null;
+    } catch(e) {
+      console.error('[Firestore] getOne error:', e);
+      return null;
+    }
+  }
+
+  // ── SAVE DASHBOARD ───────────────────────────────────────────
+  async function saveDashboard() {
+    if (!_currentData || !_currentPeriod) return;
+    try {
+      const existing = await firestoreGetAll();
       const dup = existing.find(s => s.period.from === _currentPeriod.from && s.period.to === _currentPeriod.to);
       if (dup) { showToast(t('toast_dup')); return; }
     } catch(e) {}
-    // Pre-fill with period label and open modal
-    const defaultName = fmtDate(_currentPeriod.from) + ' → ' + fmtDate(_currentPeriod.to);
+    const defaultName = fmtDate(_currentPeriod.from) + ' \u2192 ' + fmtDate(_currentPeriod.to);
     const inp = document.getElementById('save-name-input');
     inp.value = defaultName;
-    // translate modal texts
     applyTranslations();
     document.getElementById('modal-save-name').classList.add('open');
     setTimeout(() => { inp.select(); }, 80);
@@ -4867,9 +4708,9 @@
     document.getElementById('modal-save-name').classList.remove('open');
   }
 
-  function confirmSave() {
+  async function confirmSave() {
     const customLabel = document.getElementById('save-name-input').value.trim();
-    const label = fmtDate(_currentPeriod.from) + ' → ' + fmtDate(_currentPeriod.to);
+    const label = fmtDate(_currentPeriod.from) + ' \u2192 ' + fmtDate(_currentPeriod.to);
     const savedAt = new Date().toLocaleDateString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
 
     const campaigns = _currentData.campaigns || [];
@@ -4888,88 +4729,67 @@
       data:        _currentData
     };
 
-    try {
-      const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      existing.unshift(snapshot);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+    const ok = await firestoreAdd(snapshot);
+    if (ok) {
       closeSaveModal();
       const btn = document.getElementById('btn-save-dash');
-      if (btn) { btn.classList.add('saved'); btn.innerHTML = '✓ ' + (_lang==='de' ? 'Gespeichert' : 'Salvata'); }
+      if (btn) { btn.classList.add('saved'); btn.innerHTML = '\u2713 ' + (_lang==='de' ? 'Gespeichert' : 'Salvata'); }
       showToast(t('toast_saved'));
-    } catch(e) {
+    } else {
       closeSaveModal();
       showToast(t('toast_err'));
     }
   }
 
   // ── ARCHIVE ──────────────────────────────────────────────────
-  function showArchive() {
-    renderArchive();
+  async function showArchive() {
     showScreen('archive');
+    await renderArchive();
   }
 
-  function renderArchive() {
+  async function renderArchive() {
     const list = document.getElementById('archive-list');
-    let saved = [];
-    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) {}
+    list.innerHTML = '<div class="archive-empty"><div class="archive-empty-icon">\u23F3</div><p>' + (_lang==='de' ? 'Laden\u2026' : 'Caricamento\u2026') + '</p></div>';
+
+    const saved = await firestoreGetAll();
 
     if (!saved.length) {
-      list.innerHTML = `
-        <div class="archive-empty">
-          <div class="archive-empty-icon">📭</div>
-          <p>${t('archive_empty_msg')}</p>
-        </div>`;
+      list.innerHTML = '<div class="archive-empty"><div class="archive-empty-icon">\uD83D\uDCED</div><p>' + t('archive_empty_msg') + '</p></div>';
       return;
     }
 
-    list.innerHTML = `<div class="archive-grid">${saved.map(s => `
-      <div class="archive-card">
-        <button class="archive-card-delete" onclick="deleteSnapshot(${s.id}, event)" title="${t('cancel_btn')}">✕</button>
-        <div class="archive-card-period">${s.customLabel || s.label}</div>
-        <div class="archive-card-meta">${t('archive_saved_on')} ${s.savedAt}</div>
-        <div class="archive-card-stats">
-          <div class="archive-stat">
-            <div class="archive-stat-label">${t('kpi_spend')}</div>
-            <div class="archive-stat-value">€ ${parseFloat(s.stats.totalSpend).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-          </div>
-          <div class="archive-stat">
-            <div class="archive-stat-label">${t('reach')}</div>
-            <div class="archive-stat-value">${parseInt(s.stats.totalReach).toLocaleString('it-IT')}</div>
-          </div>
-          <div class="archive-stat">
-            <div class="archive-stat-label">${t('impressions')}</div>
-            <div class="archive-stat-value">${parseInt(s.stats.totalImp).toLocaleString('it-IT')}</div>
-          </div>
-          <div class="archive-stat">
-            <div class="archive-stat-label">${t('eng_page')}</div>
-            <div class="archive-stat-value">${parseInt(s.stats.totalEng).toLocaleString('it-IT')}</div>
-          </div>
-        </div>
-        <button class="archive-card-open" onclick="openSnapshot(${s.id})">${t('archive_open_btn')}</button>
-      </div>`).join('')}</div>`;
+    list.innerHTML = '<div class="archive-grid">' + saved.map(s => '<div class="archive-card">'
+      + '<button class="archive-card-delete" onclick="deleteSnapshot(' + s.id + ', event)" title="' + t('cancel_btn') + '">\u2715</button>'
+      + '<div class="archive-card-period">' + (s.customLabel || s.label) + '</div>'
+      + '<div class="archive-card-meta">' + t('archive_saved_on') + ' ' + s.savedAt + '</div>'
+      + '<div class="archive-card-stats">'
+      + '<div class="archive-stat"><div class="archive-stat-label">' + t('kpi_spend') + '</div><div class="archive-stat-value">\u20AC ' + parseFloat(s.stats.totalSpend).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</div></div>'
+      + '<div class="archive-stat"><div class="archive-stat-label">' + t('reach') + '</div><div class="archive-stat-value">' + parseInt(s.stats.totalReach).toLocaleString('it-IT') + '</div></div>'
+      + '<div class="archive-stat"><div class="archive-stat-label">' + t('impressions') + '</div><div class="archive-stat-value">' + parseInt(s.stats.totalImp).toLocaleString('it-IT') + '</div></div>'
+      + '<div class="archive-stat"><div class="archive-stat-label">' + t('eng_page') + '</div><div class="archive-stat-value">' + parseInt(s.stats.totalEng).toLocaleString('it-IT') + '</div></div>'
+      + '</div>'
+      + '<button class="archive-card-open" onclick="openSnapshot(' + s.id + ')">' + t('archive_open_btn') + '</button>'
+      + '</div>').join('') + '</div>';
   }
 
-  function openSnapshot(id) {
-    let saved = [];
-    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) {}
-    const snap = saved.find(s => s.id === id);
-    if (!snap) return;
+  async function openSnapshot(id) {
+    const snap = await firestoreGetOne(id);
+    if (!snap) { showToast(_lang==='de' ? '\u274C Dashboard nicht gefunden' : '\u274C Dashboard non trovata'); return; }
     renderResults(snap.period, snap.data);
-    // mark save button as already saved
     const btn = document.getElementById('btn-save-dash');
-    if (btn) { btn.classList.add('saved'); btn.innerHTML = '✓ ' + (_lang==='de' ? 'Bereits gespeichert' : 'Già salvata'); }
+    if (btn) { btn.classList.add('saved'); btn.innerHTML = '\u2713 ' + (_lang==='de' ? 'Bereits gespeichert' : 'Gi\u00E0 salvata'); }
   }
 
-  function deleteSnapshot(id, e) {
+  async function deleteSnapshot(id, e) {
     e.stopPropagation();
     if (!confirm(t('archive_delete_confirm'))) return;
-    try {
-      let saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      saved = saved.filter(s => s.id !== id);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
-      renderArchive();
+    const ok = await firestoreDelete(id);
+    if (ok) {
+      await renderArchive();
       showToast(t('toast_deleted'));
-    } catch(e) {}
+    } else {
+      showToast(t('toast_err'));
+    }
   }
 
   // ── TOAST ────────────────────────────────────────────────────
